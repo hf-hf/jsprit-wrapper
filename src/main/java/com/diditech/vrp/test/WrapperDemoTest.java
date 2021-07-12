@@ -29,7 +29,7 @@ import cn.hutool.core.date.DateUtil;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
-public class MultiTest2 {
+public class WrapperDemoTest {
 
     private static List<Order> orderList = new ArrayList<Order>(){
         {add(new Order("小明", getMillisecond("08:30:00"), "120.399124,36.178779", "120.493266,36.155936"));}

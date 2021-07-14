@@ -5,6 +5,11 @@ import java.util.List;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * 百度请求响应
+ * @author hefan
+ * @date 2021/7/14 15:40
+ */
 @NoArgsConstructor
 @Data
 public class BaiduResponse {

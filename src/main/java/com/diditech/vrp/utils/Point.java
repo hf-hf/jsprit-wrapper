@@ -1,10 +1,18 @@
-package com.diditech.vrp.geo;
+package com.diditech.vrp.utils;
 
 import com.graphhopper.jsprit.core.problem.Location;
 import com.graphhopper.jsprit.core.util.Coordinate;
 
 import lombok.AllArgsConstructor;
+import lombok.Data;
 
+
+/**
+ * 坐标点
+ * @author hefan
+ * @date 2021/7/14 14:12
+ */
+@Data
 @AllArgsConstructor
 public class Point {
 

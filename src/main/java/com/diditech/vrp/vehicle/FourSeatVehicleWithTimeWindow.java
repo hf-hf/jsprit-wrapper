@@ -1,45 +1,17 @@
 package com.diditech.vrp.vehicle;
 
-import java.util.Date;
-
-import com.diditech.vrp.geo.Point;
-import com.diditech.vrp.vehicle.type.BaseVehicleType;
+import com.diditech.vrp.vehicle.type.BasicVehicleType;
 
 /**
- * 四座车
+ * 四座车带时间窗口
  *
  * @author hefan
  * @date 2021/7/8 13:55
  */
-public class FourSeatVehicleWithTimeWindow extends BaseVehicle
-        implements ITimeWindow<FourSeatVehicleWithTimeWindow> {
+public class FourSeatVehicleWithTimeWindow extends BasicVehicleWithTimeWindow {
 
     public FourSeatVehicleWithTimeWindow(String id) {
-        super(id, new BaseVehicleType(id, 4));
-    }
-
-    @Override
-    public FourSeatVehicleWithTimeWindow setEarliestStart(Date date) {
-        builder.setEarliestStart(date.getTime());
-        System.out.println(date.getTime());
-        return this;
-    }
-
-    @Override
-    public FourSeatVehicleWithTimeWindow setLatestArrival(Date date) {
-        builder.setLatestArrival(date.getTime());
-        System.out.println(date.getTime());
-        return this;
-    }
-
-    public FourSeatVehicleWithTimeWindow setReturnToDepot(boolean returnToDepot) {
-        builder.setReturnToDepot(returnToDepot);
-        return this;
-    }
-
-    public FourSeatVehicleWithTimeWindow setStartLocation(Point point) {
-        builder.setStartLocation(point.loc());
-        return this;
+        super(id, new BasicVehicleType(id, 4));
     }
 
 }

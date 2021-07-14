@@ -3,7 +3,7 @@ package com.diditech.vrp.job;
 import java.util.Date;
 
 import com.diditech.vrp.IBuilder;
-import com.diditech.vrp.geo.Point;
+import com.diditech.vrp.utils.Point;
 import com.graphhopper.jsprit.core.problem.job.Shipment;
 import com.graphhopper.jsprit.core.problem.solution.route.activity.TimeWindow;
 

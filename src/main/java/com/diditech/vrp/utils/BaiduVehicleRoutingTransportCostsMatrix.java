@@ -1,8 +1,7 @@
 package com.diditech.vrp.utils;
 
-import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 import com.diditech.vrp.IBuilder;
 import com.diditech.vrp.baidu.BaiduApi;
@@ -11,6 +10,7 @@ import com.graphhopper.jsprit.core.problem.Location;
 import com.graphhopper.jsprit.core.problem.cost.AbstractForwardVehicleRoutingTransportCosts;
 import com.graphhopper.jsprit.core.problem.driver.Driver;
 import com.graphhopper.jsprit.core.problem.vehicle.Vehicle;
+import com.graphhopper.jsprit.core.util.Coordinate;
 import com.graphhopper.jsprit.core.util.FastVehicleRoutingTransportCostsMatrix;
 
 /**
@@ -26,21 +26,19 @@ public class BaiduVehicleRoutingTransportCostsMatrix extends AbstractForwardVehi
 
     private FastVehicleRoutingTransportCostsMatrix matrix;
 
-    private List<Location> list;
+    private Map<String, Coordinate> map;
 
-    public BaiduVehicleRoutingTransportCostsMatrix(List<Location> list, boolean isSymmetric) {
-        this.list = list.stream()
-                .sorted(Comparator.comparing(Location::getId))
-                .collect(Collectors.toList());
+    public BaiduVehicleRoutingTransportCostsMatrix(Map<String, Coordinate> locationMap, boolean isSymmetric) {
+        this.map = locationMap;
         this.builder = FastVehicleRoutingTransportCostsMatrix.Builder
-                .newInstance(this.list.size(), isSymmetric);
+                .newInstance(locationMap.size(), isSymmetric);
         load();
         // 判断是否加载成功
         this.matrix = this.builder.build();
     }
 
     private void load() {
-        BaiduResponse response = BaiduApi.routeMatrix(list);
+        BaiduResponse response = BaiduApi.routeMatrix(map);
         if (0 != response.getStatus()) {
             return;
         }
@@ -48,11 +46,15 @@ public class BaiduVehicleRoutingTransportCostsMatrix extends AbstractForwardVehi
         int index = 0;
         double distance;
         double duration;
-        for (int i = 0; i < list.size(); i++) {
-            for (int j = 0; j < list.size(); j++) {
+        int fromN;
+        int toN;
+        for (String from : map.keySet()) {
+            fromN = Integer.parseInt(from);
+            for (String to : map.keySet()) {
+                toN = Integer.parseInt(to);
                 distance = result.get(index).getDistance().getValue();
                 duration = result.get(index).getDuration().getValue() * 1000;
-                builder.addTransportTimeAndDistance(i, j, duration, distance);
+                builder.addTransportTimeAndDistance(fromN, toN, duration, distance);
                 index++;
             }
         }

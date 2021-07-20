@@ -1,25 +1,16 @@
 package com.diditech.vrp.solution.route;
 
-import com.diditech.vrp.enums.ActType;
-
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * 行为
- * @author hefan
- * @date 2021/7/14 10:49
- */
-@Data
 @NoArgsConstructor
+@Data
 public class Act {
+    private String type;
 
-    private ActType type;
+    private String shipmentId;
 
-    private String jobId;
+    private long arrTime;
 
-    private double arrTime;
-
-    private double endTime;
-
+    private long endTime;
 }

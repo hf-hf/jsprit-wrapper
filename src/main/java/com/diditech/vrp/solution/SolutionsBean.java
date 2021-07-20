@@ -1,8 +1,8 @@
-package com.diditech.vrp.domain;
+package com.diditech.vrp.solution;
 
 import java.util.List;
 
-import com.diditech.vrp.domain.route.Route;
+import com.diditech.vrp.solution.route.Route;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

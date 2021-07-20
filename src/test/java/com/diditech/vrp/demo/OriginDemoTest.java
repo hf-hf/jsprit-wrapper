@@ -1,5 +1,6 @@
-package com.diditech.vrp.test;
+package com.diditech.vrp.demo;
 
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -7,15 +8,17 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.alibaba.fastjson.JSON;
-import com.diditech.vrp.baidu.BaiduResponse;
-import com.diditech.vrp.domain.Problem;
-import com.diditech.vrp.utils.SingleCoordinateBaiduVehicleRoutingTransportCostsMatrix;
-import com.diditech.vrp.utils.VrpJsonReader;
-import com.diditech.vrp.utils.VrpJsonWriter;
+import com.diditech.vrp.remote.BaiduApi;
+import com.diditech.vrp.remote.BaiduResponse;
+import com.diditech.vrp.solution.Problem;
+import com.diditech.vrp.utils.VrpResultWriter;
+import com.graphhopper.jsprit.analysis.toolbox.GraphStreamViewer;
+import com.graphhopper.jsprit.analysis.toolbox.Plotter;
 import com.graphhopper.jsprit.core.algorithm.VehicleRoutingAlgorithm;
 import com.graphhopper.jsprit.core.algorithm.box.Jsprit;
 import com.graphhopper.jsprit.core.problem.Location;
 import com.graphhopper.jsprit.core.problem.VehicleRoutingProblem;
+import com.graphhopper.jsprit.core.problem.cost.VehicleRoutingTransportCosts;
 import com.graphhopper.jsprit.core.problem.job.Shipment;
 import com.graphhopper.jsprit.core.problem.solution.VehicleRoutingProblemSolution;
 import com.graphhopper.jsprit.core.problem.solution.route.activity.TimeWindow;
@@ -28,29 +31,23 @@ import com.graphhopper.jsprit.core.util.FastVehicleRoutingTransportCostsMatrix;
 import com.graphhopper.jsprit.core.util.Solutions;
 import com.graphhopper.jsprit.io.problem.VrpXMLWriter;
 
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.DateUtil;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
-public class OriginDemoTest2 {
+public class OriginDemoTest {
 
-    private static List<Order> orderList_0 = new ArrayList<Order>(){
+    private static List<Order> orderList = new ArrayList<Order>(){
         {add(new Order("小明", getMillisecond("08:30:00"), "120.399124,36.178779", "120.493266,36.155936"));}
         {add(new Order("小红", getMillisecond("12:30:00"), "120.42212,36.223048", "120.490535,36.156286"));}
-    };
-
-    private static List<Order> orderList_1 = new ArrayList<Order>(){
-        {add(new Order("小王", getMillisecond("08:30:00"), "120.399124,36.178759", "120.493266,36.155966"));}
-    };
-
-    private static List<Order> orderList_2 = new ArrayList<Order>(){
-        {add(new Order("小刘", getMillisecond("17:30:00"), "120.42212,36.223028", "120.490535,36.156226"));}
+        //{add(new Order("小刚", getMillisecond("09:10:00"), "120.450147,36.111396", "120.379145,36.174118"));}
+        //{add(new Order("小亮", getMillisecond("17:40:00"), "120.423989,36.152556", "120.364773,36.086433"));}
     };
 
     private static int GLOBAL_INDEX = 0;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws UnsupportedEncodingException {
+        long start = System.currentTimeMillis();
         // 4座车类型
         // 提取车辆类型类
         VehicleTypeImpl.Builder vehicleTypeBuilder =
@@ -77,40 +74,8 @@ public class OriginDemoTest2 {
         vehicleBuilder.setType(vehicleType);
         VehicleImpl vehicle2 = vehicleBuilder.build();
 
-        List<VehicleImpl> vehicleList = new ArrayList<>(2);
-        vehicleList.add(vehicle1);
-        vehicleList.add(vehicle2);
-
-        Problem last = null;
-
-        List<Order> list;
-        for(int i=0;i <= 2;i++){
-            if(i == 0){
-                list = orderList_0;
-            } else if(i == 1) {
-                list = orderList_1;
-            } else {
-                list = orderList_2;
-            }
-            last = run(vehicleList, list, last);
-            vehicleList = null;
-        }
-
-    }
-
-    private static Problem run(List<VehicleImpl> vehicleList, List<Order> orderList,
-                               Problem last){
-        long start = System.currentTimeMillis();
         VehicleRoutingProblem.Builder vrpBuilder = VehicleRoutingProblem.Builder.newInstance();
-        if(CollectionUtil.isNotEmpty(vehicleList)){
-            vrpBuilder.addAllVehicles(vehicleList);
-        }
-        if(null != last){
-            // 加载之前的单记录
-            VrpJsonReader reader = new VrpJsonReader(vrpBuilder, last);
-            reader.read();
-            vrpBuilder.addInitialVehicleRoutes(reader.getRoutes());
-        }
+        vrpBuilder.addVehicle(vehicle1).addVehicle(vehicle2);
 
         for (Order order : orderList) {
             Shipment shipment = createShipment(order.getName(), order.getTimestamp(),
@@ -121,21 +86,14 @@ public class OriginDemoTest2 {
 
         VehicleRoutingProblem problem = vrpBuilder.build();
 
-        List<Location> list = problem.getAllLocations().stream()
-                //.filter(loc -> Integer.parseInt(loc.getId()) >= 10)
-                .sorted(Comparator.comparing(Location::getId)).collect(Collectors.toList());
+        List<Location> list = problem.getAllLocations().stream().sorted(Comparator.comparing(Location::getId)).collect(Collectors.toList());
 
-
-//        VehicleRoutingTransportCostsMatrix.Builder builder2 =
-//                VehicleRoutingTransportCostsMatrix.Builder.newInstance(false);
-//        //builder2.addTransportDistance()
-//        builder2.
-
-        SingleCoordinateBaiduVehicleRoutingTransportCostsMatrix matrix =
-                new SingleCoordinateBaiduVehicleRoutingTransportCostsMatrix(vrpBuilder.getLocationMap(), false);
+        FastVehicleRoutingTransportCostsMatrix matrix =
+                createMatrix(list.size(), BaiduApi.routeMatrix(list));
         vrpBuilder.setRoutingCost(matrix);
 
-        //matrix.getMatrix();
+        double[][][] tmp = matrix.getMatrix();
+
         problem = vrpBuilder.build();
 
         /*
@@ -155,33 +113,38 @@ public class OriginDemoTest2 {
 
         long end = System.currentTimeMillis();
 
-        //System.out.println("total:" + (end - start));
+        System.out.println("total:" + (end - start));
+        VehicleRoutingTransportCosts costs = problem.getTransportCosts();
 
         /*
          * write out problem and solution to xml-file
          */
         new VrpXMLWriter(problem, solutions).write("output/shipment-problem-with-solution.xml");
 
-        Problem problem1 = new VrpJsonWriter().write(problem, solutions, true);
+        Problem problem1 = new VrpResultWriter().write(problem, solutions, true);
         System.out.println(JSON.toJSONString(problem1));
+//
+//        List<VehicleRoutingProblemSolution> solutions1 =
+//                JSONUtil.toList(jsonObj.getJSONArray("solutions"),
+//                VehicleRoutingProblemSolution.class);
 
         /*
          * print nRoutes and totalCosts of bestSolution
          */
         SolutionPrinter.print(problem, bestSolution, SolutionPrinter.Print.VERBOSE);
-        return problem1;
 
         /*
          * plot
          */
-//        new Plotter(problem, bestSolution).plot("output/plot.png", "simple example");
-//
-//        new GraphStreamViewer(problem, Solutions.bestOf(solutions)).labelWith(GraphStreamViewer.Label.ACTIVITY)
-//                .setGraphStreamFrameScalingFactor(2)
-//                .setRenderDelay(2000)
-//                .setRenderShipments(true)
-//                //.setCameraView(30, 30, 1)
-//                .display();
+        new Plotter(problem, bestSolution).plot("output/plot.png", "simple example");
+
+        new GraphStreamViewer(problem, Solutions.bestOf(solutions)).labelWith(GraphStreamViewer.Label.ACTIVITY)
+                .setGraphStreamFrameScalingFactor(2)
+                .setRenderDelay(2000)
+                .setRenderShipments(true)
+                //.setCameraView(30, 30, 1)
+                .display();
+
     }
 
 

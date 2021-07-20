@@ -6,14 +6,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.diditech.vrp.domain.Problem;
-import com.diditech.vrp.domain.ProblemType;
-import com.diditech.vrp.domain.Shipments;
-import com.diditech.vrp.domain.SolutionsBean;
-import com.diditech.vrp.domain.VehicleTypes;
-import com.diditech.vrp.domain.VehiclesBean;
-import com.diditech.vrp.domain.route.Act;
-import com.diditech.vrp.domain.route.Route;
+import com.diditech.vrp.solution.Problem;
+import com.diditech.vrp.solution.ProblemType;
+import com.diditech.vrp.solution.Shipments;
+import com.diditech.vrp.solution.SolutionsBean;
+import com.diditech.vrp.solution.VehicleTypes;
+import com.diditech.vrp.solution.VehiclesBean;
+import com.diditech.vrp.solution.route.Act;
+import com.diditech.vrp.solution.route.Route;
 import com.graphhopper.jsprit.core.problem.Location;
 import com.graphhopper.jsprit.core.problem.VehicleRoutingProblem;
 import com.graphhopper.jsprit.core.problem.driver.Driver;
@@ -31,8 +31,13 @@ import com.graphhopper.jsprit.core.util.Coordinate;
 
 import lombok.Data;
 
+/**
+ * VRP结果读取
+ * @author hefan
+ * @date 2021/7/20 10:38
+ */
 @Data
-public class VrpJsonReader {
+public class VrpResultReader {
 
     private VehicleRoutingProblem.Builder vrpBuilder;
 
@@ -46,12 +51,12 @@ public class VrpJsonReader {
 
     private Collection<VehicleRoutingProblemSolution> solutionList = new ArrayList<>();
 
-    public VrpJsonReader(VehicleRoutingProblem.Builder vrpBuilder, Problem problem) {
+    public VrpResultReader(VehicleRoutingProblem.Builder vrpBuilder, Problem problem) {
         this.vrpBuilder = vrpBuilder;
         this.problem = problem;
     }
 
-    public void read() {
+    public VrpResultReader read() {
         readProblemType();
         readVehiclesAndTheirTypes();
 
@@ -62,6 +67,7 @@ public class VrpJsonReader {
         readSolutions();
 
         addJobsAndTheirLocationsToVrp();
+        return this;
     }
 
     private void readProblemType() {
@@ -105,7 +111,7 @@ public class VrpJsonReader {
             }
 
             //pickup-coord
-            com.diditech.vrp.domain.Location pickupLocation = pickupBean.getLocation();
+            com.diditech.vrp.solution.Location pickupLocation = pickupBean.getLocation();
             if (pickupLocation != null) {
                 pickupLocationBuilder.setCoordinate(pickupLocation.getCoordinate());
             }
@@ -137,7 +143,7 @@ public class VrpJsonReader {
             }
 
             //delivery-coord
-            com.diditech.vrp.domain.Location deliveryLocation = deliveryBean.getLocation();
+            com.diditech.vrp.solution.Location deliveryLocation = deliveryBean.getLocation();
             if (deliveryLocation != null) {
                 deliveryLocationBuilder.setCoordinate(deliveryLocation.getCoordinate());
             }

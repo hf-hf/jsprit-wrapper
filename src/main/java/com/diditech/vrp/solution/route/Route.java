@@ -1,4 +1,4 @@
-package com.diditech.vrp.domain.route;
+package com.diditech.vrp.solution.route;
 
 import java.util.List;
 

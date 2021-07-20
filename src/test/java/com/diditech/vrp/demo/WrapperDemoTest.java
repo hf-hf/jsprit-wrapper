@@ -1,4 +1,4 @@
-package com.diditech.vrp.test;
+package com.diditech.vrp.demo;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
@@ -7,12 +7,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import com.alibaba.fastjson.JSON;
 import com.diditech.vrp.JspritWrapper;
-import com.diditech.vrp.utils.Point;
 import com.diditech.vrp.job.ShipmentJob;
-import com.diditech.vrp.solution.VrpSolution;
-import com.diditech.vrp.utils.BaiduVehicleRoutingTransportCostsMatrix;
+import com.diditech.vrp.solution.costsMatrix.BatchBaiduVehicleRoutingTransportCostsMatrix;
+import com.diditech.vrp.utils.Point;
 import com.diditech.vrp.vehicle.FourSeatVehicleWithTimeWindow;
 import com.graphhopper.jsprit.analysis.toolbox.GraphStreamViewer;
 import com.graphhopper.jsprit.analysis.toolbox.Plotter;
@@ -79,8 +77,8 @@ public class WrapperDemoTest {
 
         Map<String, Coordinate> locationMap = wrapper.getLocationMap();
 
-        BaiduVehicleRoutingTransportCostsMatrix matrix =
-                new BaiduVehicleRoutingTransportCostsMatrix(locationMap, false);
+        BatchBaiduVehicleRoutingTransportCostsMatrix matrix =
+                new BatchBaiduVehicleRoutingTransportCostsMatrix(locationMap, false);
         wrapper.setRoutingCost(matrix);
 
         VehicleRoutingProblem problem = null;//wrapper.buildProblem().getProblem(false);
@@ -94,9 +92,6 @@ public class WrapperDemoTest {
          * and search a solution
          */
         Collection<VehicleRoutingProblemSolution> solutions = wrapper.searchSolutions().getSolutions();
-
-        List<VrpSolution> vrpList = wrapper.getVRPSolutions();
-        System.out.println(JSON.toJSONString(vrpList));
 
         /*
          * get the best

@@ -3,7 +3,6 @@ package com.diditech.vrp.job;
 import java.util.Date;
 
 import com.diditech.vrp.IBuilder;
-import com.diditech.vrp.IPoints;
 import com.diditech.vrp.utils.Point;
 import com.graphhopper.jsprit.core.problem.job.Shipment;
 import com.graphhopper.jsprit.core.problem.solution.route.activity.TimeWindow;
@@ -17,21 +16,27 @@ import lombok.Getter;
  * @date 2021/7/8 14:37
  */
 @Getter
-public class ShipmentJob implements IBuilder, IPoints {
+public class ShipmentJob implements IBuilder {
 
     protected Shipment.Builder builder;
+
+    protected String id;
 
     protected Point pickupPoint;
 
     protected Point deliveryPoint;
 
+    /**
+     * 负载尺寸，如4座车对应每位乘客，每位乘车负载的尺寸为1
+     */
+    protected int sizeDimension;
+
     public ShipmentJob(String id, int sizeDimension, Point pickupPoint, Point deliveryPoint) {
+        this.id = id;
         this.pickupPoint = pickupPoint;
         this.deliveryPoint = deliveryPoint;
-        this.builder = Shipment.Builder.newInstance(id)
-                .setPickupLocation(pickupPoint.loc())
-                .setDeliveryLocation(deliveryPoint.loc())
-                .addSizeDimension(0, sizeDimension);
+        this.sizeDimension = sizeDimension;
+        this.builder = Shipment.Builder.newInstance(id);
     }
 
     public ShipmentJob setPickupTimeWindow(Date start, Date end) {
@@ -47,15 +52,11 @@ public class ShipmentJob implements IBuilder, IPoints {
     }
 
     @Override
-    public Point[] getPoints() {
-        Point[] points = new Point[2];
-        points[0] = pickupPoint;
-        points[1] = deliveryPoint;
-        return points;
-    }
-
-    @Override
     public Shipment build() {
+        this.builder
+                .setPickupLocation(pickupPoint.loc())
+                .setDeliveryLocation(deliveryPoint.loc())
+                .addSizeDimension(0, sizeDimension);
         return this.builder.build();
     }
 

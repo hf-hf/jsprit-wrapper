@@ -1,4 +1,4 @@
-package com.diditech.vrp.baidu;
+package com.diditech.vrp.remote;
 
 import java.util.HashMap;
 import java.util.List;
@@ -25,7 +25,6 @@ public class BaiduApi {
     private static final String ROUTE_MATRIX_URL = "http://api.map.baidu.com/routematrix/v2/driving";
 
     public BaiduResponse singleRouteMatrix(Coordinate from, Coordinate to) {
-        StringBuilder locBuilder = new StringBuilder();
         String origins = from.getY() + "," + from.getX();
         String destinations = to.getY() + "," + to.getX();
         Map<String, Object> paramMap = new HashMap<>(3);

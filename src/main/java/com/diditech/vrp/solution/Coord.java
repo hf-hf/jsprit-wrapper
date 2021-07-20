@@ -1,4 +1,4 @@
-package com.diditech.vrp.domain;
+package com.diditech.vrp.solution;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

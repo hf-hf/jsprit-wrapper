@@ -1,4 +1,4 @@
-package com.diditech.vrp.baidu;
+package com.diditech.vrp.remote;
 
 import java.util.List;
 

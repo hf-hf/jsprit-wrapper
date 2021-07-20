@@ -1,11 +1,11 @@
-package com.diditech.vrp.utils;
+package com.diditech.vrp.solution.costsMatrix;
 
 import java.util.List;
 import java.util.Map;
 
 import com.diditech.vrp.IBuilder;
-import com.diditech.vrp.baidu.BaiduApi;
-import com.diditech.vrp.baidu.BaiduResponse;
+import com.diditech.vrp.remote.BaiduApi;
+import com.diditech.vrp.remote.BaiduResponse;
 import com.graphhopper.jsprit.core.problem.Location;
 import com.graphhopper.jsprit.core.problem.cost.AbstractForwardVehicleRoutingTransportCosts;
 import com.graphhopper.jsprit.core.problem.driver.Driver;
@@ -19,7 +19,7 @@ import com.graphhopper.jsprit.core.util.FastVehicleRoutingTransportCostsMatrix;
  * @author hefan
  * @date 2021/7/8 14:55
  */
-public class BaiduVehicleRoutingTransportCostsMatrix extends AbstractForwardVehicleRoutingTransportCosts
+public class BatchBaiduVehicleRoutingTransportCostsMatrix extends AbstractForwardVehicleRoutingTransportCosts
         implements IBuilder<FastVehicleRoutingTransportCostsMatrix> {
 
     private FastVehicleRoutingTransportCostsMatrix.Builder builder;
@@ -28,7 +28,7 @@ public class BaiduVehicleRoutingTransportCostsMatrix extends AbstractForwardVehi
 
     private Map<String, Coordinate> map;
 
-    public BaiduVehicleRoutingTransportCostsMatrix(Map<String, Coordinate> locationMap, boolean isSymmetric) {
+    public BatchBaiduVehicleRoutingTransportCostsMatrix(Map<String, Coordinate> locationMap, boolean isSymmetric) {
         this.map = locationMap;
         this.builder = FastVehicleRoutingTransportCostsMatrix.Builder
                 .newInstance(locationMap.size(), isSymmetric);

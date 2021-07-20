@@ -1,7 +1,6 @@
 package com.diditech.vrp.vehicle;
 
 import com.diditech.vrp.IBuilder;
-import com.diditech.vrp.IPoints;
 import com.diditech.vrp.utils.Point;
 import com.diditech.vrp.vehicle.type.BasicVehicleType;
 import com.graphhopper.jsprit.core.problem.vehicle.VehicleImpl;
@@ -15,7 +14,7 @@ import lombok.Getter;
  * @date 2021/7/14 13:47
  */
 @Getter
-public class BasicVehicle implements IBuilder<VehicleImpl>, IPoints {
+public class BasicVehicle implements IBuilder<VehicleImpl> {
 
     protected BasicVehicleType vehicleType;
 
@@ -30,8 +29,8 @@ public class BasicVehicle implements IBuilder<VehicleImpl>, IPoints {
     public BasicVehicle(String id, BasicVehicleType vehicleType) {
         this.id = id;
         this.vehicleType = vehicleType;
-        this.builder = VehicleImpl.Builder.newInstance(id);
-        this.builder.setType(this.vehicleType.build());
+        this.builder = VehicleImpl.Builder.newInstance(id)
+                .setType(this.vehicleType.build());
     }
 
     /**
@@ -39,7 +38,6 @@ public class BasicVehicle implements IBuilder<VehicleImpl>, IPoints {
      */
     public void setStartLocation(Point point) {
         startPoint = point;
-        builder.setStartLocation(point.loc());
     }
 
     /**
@@ -47,7 +45,6 @@ public class BasicVehicle implements IBuilder<VehicleImpl>, IPoints {
      */
     public void setEndLocation(Point point) {
         endPoint = point;
-        builder.setEndLocation(point.loc());
     }
 
     /**
@@ -58,14 +55,11 @@ public class BasicVehicle implements IBuilder<VehicleImpl>, IPoints {
     }
 
     @Override
-    public Point[] getPoints() {
-        Point[] points = new Point[1];
-        points[0] = startPoint;
-        return points;
-    }
-
-    @Override
     public VehicleImpl build() {
+        this.builder.setStartLocation(startPoint.loc());
+        if(null != endPoint) {
+            this.builder.setStartLocation(endPoint.loc());
+        }
         return this.builder.build();
     }
 

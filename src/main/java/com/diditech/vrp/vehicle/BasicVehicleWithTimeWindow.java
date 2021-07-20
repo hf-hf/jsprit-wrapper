@@ -30,7 +30,7 @@ public class BasicVehicleWithTimeWindow extends BasicVehicle
 
     @Override
     public VehicleImpl build() {
-        return this.builder.build();
+        return super.build();
     }
 
 }

@@ -1,4 +1,4 @@
-package com.diditech.vrp.test;
+package com.diditech.vrp.demo;
 
 import static com.graphhopper.jsprit.core.problem.Location.newInstance;
 

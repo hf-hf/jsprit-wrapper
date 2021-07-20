@@ -1,4 +1,4 @@
-package com.diditech.vrp.domain;
+package com.diditech.vrp.solution;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 public class Problem {
 
+    private int pointNumber;
     private ProblemType problemType;
     private VehiclesBean vehicles;
     private VehicleTypes vehicleTypes;

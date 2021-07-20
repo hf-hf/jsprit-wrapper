@@ -24,10 +24,16 @@ public class Point {
 
     private double lat;
 
+    @Deprecated
     public static Point convert(Location location){
         Coordinate coordinate = location.getCoordinate();
         return new Point(Integer.valueOf(location.getId()),
                 coordinate.getX(), coordinate.getY());
+    }
+
+    public Point(double lng, double lat) {
+        this.lng = lng;
+        this.lat = lat;
     }
 
     public Location loc() {

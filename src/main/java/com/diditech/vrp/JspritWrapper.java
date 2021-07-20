@@ -7,16 +7,22 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import com.diditech.vrp.domain.Problem;
+import com.diditech.vrp.exception.EmptyPointException;
 import com.diditech.vrp.exception.RepeatPointException;
-import com.diditech.vrp.utils.Point;
 import com.diditech.vrp.job.ShipmentJob;
-import com.diditech.vrp.solution.VRPSolution;
+import com.diditech.vrp.solution.VrpSolution;
+import com.diditech.vrp.utils.Point;
+import com.diditech.vrp.utils.VrpJsonReader;
+import com.diditech.vrp.utils.VrpJsonWriter;
 import com.diditech.vrp.vehicle.BasicVehicle;
 import com.graphhopper.jsprit.core.algorithm.VehicleRoutingAlgorithm;
 import com.graphhopper.jsprit.core.algorithm.box.Jsprit;
 import com.graphhopper.jsprit.core.problem.VehicleRoutingProblem;
 import com.graphhopper.jsprit.core.problem.cost.VehicleRoutingTransportCosts;
 import com.graphhopper.jsprit.core.problem.solution.VehicleRoutingProblemSolution;
+import com.graphhopper.jsprit.core.problem.vehicle.VehicleImpl;
+import com.graphhopper.jsprit.core.reporting.SolutionPrinter;
 import com.graphhopper.jsprit.core.util.Coordinate;
 import com.graphhopper.jsprit.core.util.Solutions;
 
@@ -36,9 +42,9 @@ public class JspritWrapper {
 
     protected Collection<VehicleRoutingProblemSolution> solutions;
 
-    protected List<VRPSolution> vrpSolutions;
+    protected List<VrpSolution> vrpSolutions;
 
-    protected List<BasicVehicle> vehicleList = new LinkedList<>();
+    protected Map<String, VehicleImpl> vehicleMap = new HashMap<>();
 
     protected List<ShipmentJob> jobList = new LinkedList<>();
 
@@ -48,9 +54,19 @@ public class JspritWrapper {
         return new JspritWrapper();
     }
 
+    public JspritWrapper addInitialVehicleRoutes(Problem lastProblem) {
+        // 加载之前的单记录
+        VrpJsonReader reader = new VrpJsonReader(this.builder, lastProblem);
+        reader.read();
+        this.builder.addInitialVehicleRoutes(reader.getRoutes());
+        return this;
+    }
+
     public JspritWrapper addVehicle(BasicVehicle vehicle) {
-        this.vehicleList.add(vehicle);
-        this.builder.addVehicle(vehicle.build());
+        checkPoint(vehicle);
+        VehicleImpl vehicleImpl = vehicle.build();
+        this.vehicleMap.put(vehicle.getId(), vehicleImpl);
+        this.builder.addVehicle(vehicleImpl);
         return this;
     }
 
@@ -60,6 +76,7 @@ public class JspritWrapper {
     }
 
     public JspritWrapper addJob(ShipmentJob job) {
+        checkPoint(job);
         this.jobList.add(job);
         this.builder.addJob(job.build());
         return this;
@@ -82,13 +99,14 @@ public class JspritWrapper {
 
     public JspritWrapper searchSolutions() {
         this.solutions = this.algorithm.searchSolutions();
-        List<VRPSolution> vrpSolutions = new ArrayList<>(solutions.size());
-        VRPSolution vrpSolution;
+        List<VrpSolution> vrpSolutions = new ArrayList<>(solutions.size());
+        VrpSolution vrpSolution;
         for (VehicleRoutingProblemSolution solution : solutions) {
-            vrpSolution = new VRPSolution(solution);
+            vrpSolution = new VrpSolution(solution);
             vrpSolutions.add(vrpSolution);
         }
         this.vrpSolutions = vrpSolutions;
+        // load shipment
         return this;
     }
 
@@ -104,13 +122,17 @@ public class JspritWrapper {
         return this.problem;
     }
 
-    public List<VRPSolution> getVRPSolutions() {
+    public Problem getProblem(boolean onlyBestSolution) {
+        return new VrpJsonWriter().write(this.problem, this.solutions, onlyBestSolution);
+    }
+
+    public List<VrpSolution> getVRPSolutions() {
         return this.vrpSolutions;
     }
 
-    public VRPSolution bestOf() {
-        VRPSolution best = null;
-        for (VRPSolution s : this.vrpSolutions) {
+    public VrpSolution bestOf() {
+        VrpSolution best = null;
+        for (VrpSolution s : this.vrpSolutions) {
             if (best == null) best = s;
             else if (s.getCost() < best.getCost()) best = s;
         }
@@ -125,16 +147,29 @@ public class JspritWrapper {
         return Solutions.bestOf(this.solutions);
     }
 
+    public void print(){
+        SolutionPrinter.print(this.problem, bestOfSolutions(), SolutionPrinter.Print.VERBOSE);
+    }
+
     /**
      * 确保point id不会有重复
      *
-     * @param point
+     * @param iPoints
      */
-    private void addPoint(Point point) {
-        if (pointMap.containsKey(point.getId())) {
-            throw new RepeatPointException(point);
+    private void checkPoint(IPoints iPoints) {
+        Point[] points = iPoints.getPoints();
+        if (points.length == 0) {
+            return;
         }
-        pointMap.put(point.getId(), point);
+        for (Point point : points) {
+            if (null == point) {
+                throw new EmptyPointException();
+            }
+            if (pointMap.containsKey(point.getId())) {
+                throw new RepeatPointException(point);
+            }
+            pointMap.put(point.getId(), point);
+        }
     }
 
 }

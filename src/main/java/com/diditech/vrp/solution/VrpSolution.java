@@ -5,12 +5,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.diditech.vrp.solution.route.VRoute;
 import com.graphhopper.jsprit.core.problem.job.Job;
 import com.graphhopper.jsprit.core.problem.solution.VehicleRoutingProblemSolution;
 import com.graphhopper.jsprit.core.problem.solution.route.VehicleRoute;
 import com.graphhopper.jsprit.core.util.VehicleIndexComparator;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * 车辆路径问题解决方案
@@ -19,7 +21,8 @@ import lombok.Data;
  * @date 2021/7/14 11:03
  */
 @Data
-public class VRPSolution {
+@NoArgsConstructor
+public class VrpSolution {
 
     private double cost;
 
@@ -32,7 +35,7 @@ public class VRPSolution {
      */
     private List<String> unassignedJobs;
 
-    public VRPSolution(VehicleRoutingProblemSolution solution) {
+    public VrpSolution(VehicleRoutingProblemSolution solution) {
         List<VehicleRoute> list = new ArrayList<>(solution.getRoutes());
         Collections.sort(list, new VehicleIndexComparator());
         cost = solution.getCost();

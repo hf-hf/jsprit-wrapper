@@ -7,9 +7,12 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.alibaba.fastjson.JSON;
 import com.diditech.vrp.baidu.BaiduApi;
 import com.diditech.vrp.baidu.BaiduResponse;
-import com.diditech.vrp.solution.VRPSolution;
+import com.diditech.vrp.domain.Problem;
+import com.diditech.vrp.solution.VrpSolution;
+import com.diditech.vrp.utils.VrpJsonWriter;
 import com.graphhopper.jsprit.analysis.toolbox.GraphStreamViewer;
 import com.graphhopper.jsprit.analysis.toolbox.Plotter;
 import com.graphhopper.jsprit.core.algorithm.VehicleRoutingAlgorithm;
@@ -38,8 +41,8 @@ public class OriginDemoTest {
     private static List<Order> orderList = new ArrayList<Order>(){
         {add(new Order("小明", getMillisecond("08:30:00"), "120.399124,36.178779", "120.493266,36.155936"));}
         {add(new Order("小红", getMillisecond("12:30:00"), "120.42212,36.223048", "120.490535,36.156286"));}
-        {add(new Order("小刚", getMillisecond("09:10:00"), "120.450147,36.111396", "120.379145,36.174118"));}
-        {add(new Order("小亮", getMillisecond("16:40:00"), "120.423989,36.152556", "120.364773,36.086433"));}
+        //{add(new Order("小刚", getMillisecond("09:10:00"), "120.450147,36.111396", "120.379145,36.174118"));}
+        //{add(new Order("小亮", getMillisecond("17:40:00"), "120.423989,36.152556", "120.364773,36.086433"));}
     };
 
     private static int GLOBAL_INDEX = 0;
@@ -104,10 +107,10 @@ public class OriginDemoTest {
          */
         Collection<VehicleRoutingProblemSolution> solutions = algorithm.searchSolutions();
 
-        List<VRPSolution> vrpList = new ArrayList<>(solutions.size());
-        VRPSolution vrpSolution;
+        List<VrpSolution> vrpList = new ArrayList<>(solutions.size());
+        VrpSolution vrpSolution;
         for (VehicleRoutingProblemSolution solution : solutions) {
-            vrpSolution = new VRPSolution(solution);
+            vrpSolution = new VrpSolution(solution);
             vrpList.add(vrpSolution);
         }
 
@@ -126,9 +129,8 @@ public class OriginDemoTest {
          */
         new VrpXMLWriter(problem, solutions).write("output/shipment-problem-with-solution.xml");
 
-//        OutputStream xmlOutputStream = new VrpXMLWriter(problem, solutions, true).write();
-//        String xmlOutput = xmlOutputStream.toString();
-//        JSONObject jsonObj = XML.toJSONObject(xmlOutput);
+        Problem problem1 = new VrpJsonWriter().write(problem, solutions, true);
+        System.out.println(JSON.toJSONString(problem1));
 //
 //        List<VehicleRoutingProblemSolution> solutions1 =
 //                JSONUtil.toList(jsonObj.getJSONArray("solutions"),
@@ -218,7 +220,7 @@ public class OriginDemoTest {
         Shipment shipment = Shipment.Builder.newInstance(name)
                 // 上车时限 10分钟
                 .setPickupTimeWindow(TimeWindow.newInstance(startTime, startTime + 10 * 60 * 1000))
-                //.setDeliveryTimeWindow()
+                .setDeliveryTimeWindow(TimeWindow.newInstance(startTime + 60 * 60 * 1000, startTime + 2 * 60 * 60 * 1000))
                 // 暂定人数每次都为1人
                 .addSizeDimension(0, 1)
                 .setPickupLocation(loc(createCoordinate(x1y1Arr[0], x1y1Arr[1])))

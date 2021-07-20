@@ -1,10 +1,13 @@
-package com.diditech.vrp.solution;
+package com.diditech.vrp.solution.route;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import com.diditech.vrp.enums.ActType;
 import com.graphhopper.jsprit.core.problem.job.Job;
 import com.graphhopper.jsprit.core.problem.solution.route.VehicleRoute;
+import com.graphhopper.jsprit.core.problem.solution.route.activity.DeliverShipment;
+import com.graphhopper.jsprit.core.problem.solution.route.activity.PickupShipment;
 import com.graphhopper.jsprit.core.problem.solution.route.activity.TourActivity;
 
 import lombok.Data;
@@ -42,6 +45,15 @@ public class VRoute {
             if (tAct instanceof TourActivity.JobActivity) {
                 Job job = ((TourActivity.JobActivity) tAct).getJob();
                 act.setJobId(job.getId());
+                if(tAct instanceof PickupShipment){
+                    PickupShipment shipment = (PickupShipment) tAct;
+                    act.setType(ActType.PICKUP_SHIPMENT);
+                    //act.setPoint(Point.convert(shipment.getLocation()));
+                } else if(tAct instanceof DeliverShipment){
+                    DeliverShipment shipment = (DeliverShipment) tAct;
+                    act.setType(ActType.DELIVER_SHIPMENT);
+                    //act.setPoint(Point.convert(shipment.getLocation()));
+                }
             }
             act.setArrTime(tAct.getArrTime());
             act.setEndTime(tAct.getEndTime());

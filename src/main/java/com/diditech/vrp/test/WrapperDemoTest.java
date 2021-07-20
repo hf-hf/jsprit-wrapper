@@ -7,10 +7,11 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import com.alibaba.fastjson.JSON;
 import com.diditech.vrp.JspritWrapper;
 import com.diditech.vrp.utils.Point;
 import com.diditech.vrp.job.ShipmentJob;
-import com.diditech.vrp.solution.VRPSolution;
+import com.diditech.vrp.solution.VrpSolution;
 import com.diditech.vrp.utils.BaiduVehicleRoutingTransportCostsMatrix;
 import com.diditech.vrp.vehicle.FourSeatVehicleWithTimeWindow;
 import com.graphhopper.jsprit.analysis.toolbox.GraphStreamViewer;
@@ -24,7 +25,6 @@ import com.graphhopper.jsprit.core.util.Solutions;
 import com.graphhopper.jsprit.io.problem.VrpXMLWriter;
 
 import cn.hutool.core.date.DateUtil;
-import cn.hutool.json.JSONUtil;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -75,7 +75,7 @@ public class WrapperDemoTest {
                     order.getStart(), order.getEnd()));
         }
 
-        wrapper.setFleetSize(VehicleRoutingProblem.FleetSize.INFINITE);
+        wrapper.setFleetSize(VehicleRoutingProblem.FleetSize.FINITE);
 
         Map<String, Coordinate> locationMap = wrapper.getLocationMap();
 
@@ -83,7 +83,7 @@ public class WrapperDemoTest {
                 new BaiduVehicleRoutingTransportCostsMatrix(locationMap, false);
         wrapper.setRoutingCost(matrix);
 
-        VehicleRoutingProblem problem = wrapper.buildProblem().getProblem();
+        VehicleRoutingProblem problem = null;//wrapper.buildProblem().getProblem(false);
 
         /*
          * get the algorithm out-of-the-box.
@@ -95,8 +95,8 @@ public class WrapperDemoTest {
          */
         Collection<VehicleRoutingProblemSolution> solutions = wrapper.searchSolutions().getSolutions();
 
-        List<VRPSolution> vrpList = wrapper.getVRPSolutions();
-        System.out.println(JSONUtil.toJsonPrettyStr(vrpList));
+        List<VrpSolution> vrpList = wrapper.getVRPSolutions();
+        System.out.println(JSON.toJSONString(vrpList));
 
         /*
          * get the best

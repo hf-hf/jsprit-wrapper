@@ -24,6 +24,19 @@ public class BaiduApi {
 
     private static final String ROUTE_MATRIX_URL = "http://api.map.baidu.com/routematrix/v2/driving";
 
+    public BaiduResponse singleRouteMatrix(Coordinate from, Coordinate to) {
+        StringBuilder locBuilder = new StringBuilder();
+        String origins = from.getY() + "," + from.getX();
+        String destinations = to.getY() + "," + to.getX();
+        Map<String, Object> paramMap = new HashMap<>(3);
+        paramMap.put("origins", origins);
+        paramMap.put("destinations", destinations);
+        paramMap.put("ak", AK);
+        String jsonString = HttpUtil.get(ROUTE_MATRIX_URL, paramMap);
+        BaiduResponse response = JSONUtil.toBean(jsonString, BaiduResponse.class);
+        return response;
+    }
+
     public BaiduResponse routeMatrix(Map<String, Coordinate> map) {
         StringBuilder locBuilder = new StringBuilder();
         for (Coordinate coordinate : map.values()) {

@@ -1,4 +1,6 @@
-package com.diditech.vrp.solution;
+package com.diditech.vrp.solution.route;
+
+import com.diditech.vrp.enums.ActType;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,6 +13,8 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 public class Act {
+
+    private ActType type;
 
     private String jobId;
 

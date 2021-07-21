@@ -73,6 +73,20 @@ public class JspritWrapper {
         return this;
     }
 
+    /**
+     * 移除车辆
+     */
+    public JspritWrapper removeVehicle(String vehicleId){
+        return this;
+    }
+
+    /**
+     * 移除订单
+     */
+    public JspritWrapper removeJob(String jobId){
+        return this;
+    }
+
     public JspritWrapper addInitialVehicleRoutes(Problem lastProblem) {
         if (ObjectUtil.isNotNull(lastProblem)) {
             // 加载之前的单记录

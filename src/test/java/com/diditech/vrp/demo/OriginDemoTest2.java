@@ -132,7 +132,7 @@ public class OriginDemoTest2 {
 //        builder2.
 
         BaiduVehicleRoutingTransportCostsMatrix matrix =
-                new BaiduVehicleRoutingTransportCostsMatrix(vrpBuilder.getLocationMap(), false);
+                new BaiduVehicleRoutingTransportCostsMatrix(vrpBuilder.getLocationMap(), null, false);
         vrpBuilder.setRoutingCost(matrix);
 
         //matrix.getMatrix();

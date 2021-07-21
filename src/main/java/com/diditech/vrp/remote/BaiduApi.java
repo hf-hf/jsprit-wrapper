@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.diditech.vrp.enums.TacticsEnum;
 import com.graphhopper.jsprit.core.problem.Location;
 import com.graphhopper.jsprit.core.util.Coordinate;
 
@@ -24,13 +25,14 @@ public class BaiduApi {
 
     private static final String ROUTE_MATRIX_URL = "http://api.map.baidu.com/routematrix/v2/driving";
 
-    public BaiduResponse singleRouteMatrix(Coordinate from, Coordinate to) {
+    public BaiduResponse singleRouteMatrix(Coordinate from, Coordinate to, TacticsEnum tactics) {
         String origins = from.getY() + "," + from.getX();
         String destinations = to.getY() + "," + to.getX();
         Map<String, Object> paramMap = new HashMap<>(3);
         paramMap.put("origins", origins);
         paramMap.put("destinations", destinations);
         paramMap.put("ak", AK);
+        paramMap.put("tactics", tactics.getValue());
         String jsonString = HttpUtil.get(ROUTE_MATRIX_URL, paramMap);
         BaiduResponse response = JSONUtil.toBean(jsonString, BaiduResponse.class);
         return response;

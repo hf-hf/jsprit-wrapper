@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.diditech.vrp.IBuilder;
+import com.diditech.vrp.JspritConfig;
 import com.diditech.vrp.remote.BaiduApi;
 import com.diditech.vrp.remote.BaiduResponse;
 import com.graphhopper.jsprit.core.problem.Location;
@@ -28,8 +29,13 @@ public class BaiduVehicleRoutingTransportCostsMatrix extends AbstractForwardVehi
 
     private Map<String, Coordinate> map;
 
-    public BaiduVehicleRoutingTransportCostsMatrix(Map<String, Coordinate> locationMap, boolean isSymmetric) {
+    private JspritConfig config;
+
+    public BaiduVehicleRoutingTransportCostsMatrix(Map<String, Coordinate> locationMap,
+                                                   JspritConfig config,
+                                                   boolean isSymmetric) {
         this.map = locationMap;
+        this.config = config;
         this.builder = FastVehicleRoutingTransportCostsMatrix.Builder
                 .newInstance(locationMap.size(), isSymmetric);
         load();
@@ -46,7 +52,7 @@ public class BaiduVehicleRoutingTransportCostsMatrix extends AbstractForwardVehi
             fromCoord = map.get(from);
             for (String to : map.keySet()) {
                 toCoord = map.get(to);
-                BaiduResponse response = BaiduApi.singleRouteMatrix(fromCoord, toCoord);
+                BaiduResponse response = BaiduApi.singleRouteMatrix(fromCoord, toCoord, config.getTactics());
                 if (0 != response.getStatus()) {
                     continue;
                 }
@@ -55,7 +61,7 @@ public class BaiduVehicleRoutingTransportCostsMatrix extends AbstractForwardVehi
                 duration = result.get(0).getDuration().getValue() * 1000;
                 builder.addTransportTimeAndDistance(Integer.parseInt(from), Integer.parseInt(to),
                         duration, distance);
-                System.out.println(Integer.parseInt(from) + "-" + Integer.parseInt(to));
+                //System.out.println(Integer.parseInt(from) + "-" + Integer.parseInt(to));
             }
         }
     }

@@ -3,13 +3,15 @@ package com.diditech.vrp;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.diditech.vrp.job.ShipmentJob;
 import com.diditech.vrp.solution.Problem;
-import com.diditech.vrp.solution.costsMatrix.BatchBaiduVehicleRoutingTransportCostsMatrix;
+import com.diditech.vrp.solution.costsMatrix.BaiduVehicleRoutingTransportCostsMatrix;
 import com.diditech.vrp.utils.Point;
 import com.diditech.vrp.utils.VrpResultReader;
 import com.diditech.vrp.utils.VrpResultWriter;
@@ -19,6 +21,7 @@ import com.graphhopper.jsprit.core.algorithm.box.Jsprit;
 import com.graphhopper.jsprit.core.problem.VehicleRoutingProblem;
 import com.graphhopper.jsprit.core.problem.cost.VehicleRoutingTransportCosts;
 import com.graphhopper.jsprit.core.problem.solution.VehicleRoutingProblemSolution;
+import com.graphhopper.jsprit.core.problem.solution.route.VehicleRoute;
 import com.graphhopper.jsprit.core.problem.vehicle.VehicleImpl;
 import com.graphhopper.jsprit.core.reporting.SolutionPrinter;
 import com.graphhopper.jsprit.core.util.Coordinate;
@@ -34,6 +37,8 @@ import cn.hutool.core.util.ObjectUtil;
  * @date 2021/7/8 15:11
  */
 public class JspritWrapper {
+
+    protected JspritConfig config = JspritConfig.DEFAULT;
 
     protected VehicleRoutingProblem.Builder builder = VehicleRoutingProblem.Builder.newInstance();
 
@@ -57,6 +62,10 @@ public class JspritWrapper {
 
     protected VehicleRoutingProblem.FleetSize fleetSize = DEFAULT_FLEET_SIZE;
 
+    protected Set<String> frozenJobIds = new HashSet<>();
+
+    protected Set<String> frozenVehicleIds = new HashSet<>();
+
     public static JspritWrapper create() {
         return new JspritWrapper();
     }
@@ -69,21 +78,24 @@ public class JspritWrapper {
     /**
      * 加载规划配置
      */
-    public JspritWrapper setConfig(){
+    public JspritWrapper setConfig(JspritConfig config) {
+        this.config = config;
         return this;
     }
 
     /**
-     * 移除车辆
+     * 冻结车辆
      */
-    public JspritWrapper removeVehicle(String vehicleId){
+    public JspritWrapper freezeVehicle(String vehicleId) {
+        frozenJobIds.add(vehicleId);
         return this;
     }
 
     /**
-     * 移除订单
+     * 冻结订单
      */
-    public JspritWrapper removeJob(String jobId){
+    public JspritWrapper freezeJob(String jobId) {
+        frozenVehicleIds.add(jobId);
         return this;
     }
 
@@ -91,21 +103,16 @@ public class JspritWrapper {
         if (ObjectUtil.isNotNull(lastProblem)) {
             // 加载之前的单记录
             VrpResultReader reader =
-                    new VrpResultReader(this.builder, lastProblem)
-                            .read();
-            // TODO 过滤已移除的车和单
-            this.builder.addInitialVehicleRoutes(reader.getRoutes());
+                    new VrpResultReader(this.builder, lastProblem).read();
+            this.builder.addInitialVehicleRoutes(filterFrozen(reader.getRoutes()));
         }
         return this;
     }
 
-    public void cancelVehicle(){
-
+    private List<VehicleRoute> filterFrozen(List<VehicleRoute> routes){
+        return routes;
     }
 
-    public void cancelJob(){
-
-    }
 
     public JspritWrapper addVehicles(List<BasicVehicle> vehicles) {
         if (CollectionUtil.isNotEmpty(vehicles)) {
@@ -143,8 +150,9 @@ public class JspritWrapper {
 
     public JspritWrapper setDefaultBaiduRoutingCost() {
         Map<String, Coordinate> locationMap = getLocationMap();
-        BatchBaiduVehicleRoutingTransportCostsMatrix matrix =
-                new BatchBaiduVehicleRoutingTransportCostsMatrix(locationMap, false);
+        BaiduVehicleRoutingTransportCostsMatrix matrix =
+                new BaiduVehicleRoutingTransportCostsMatrix(locationMap,
+                        this.config, false);
         setRoutingCost(matrix);
         return this;
     }

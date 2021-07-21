@@ -116,6 +116,8 @@ public class SimpleWrapperDemo {
         end = System.currentTimeMillis();
         System.out.println("third round total cost:" + (end - start));
         // third round end
+
+        //SolutionUtils.bestOf(last);
     }
 
     public static Problem build(List<BasicVehicle> vehicleList,
@@ -126,9 +128,9 @@ public class SimpleWrapperDemo {
                 //.setFleetSize(VehicleRoutingProblem.FleetSize.FINITE)
                 .addVehicles(vehicleList)
                 .addJobs(jobList)
-                .setDefaultBaiduRoutingCost(false)
+                .setDefaultBaiduRoutingCost()
                 .buildProblem(true);
-        wrapper.print();
+        wrapper.printBestSolution();
         return problem;
     }
 

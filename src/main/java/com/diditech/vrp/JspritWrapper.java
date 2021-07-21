@@ -69,7 +69,7 @@ public class JspritWrapper {
     /**
      * 加载规划配置
      */
-    public JspritWrapper loadConfig(){
+    public JspritWrapper setConfig(){
         return this;
     }
 
@@ -79,10 +79,18 @@ public class JspritWrapper {
             VrpResultReader reader =
                     new VrpResultReader(this.builder, lastProblem)
                             .read();
-            this.pointNumber = lastProblem.getPointNumber();
+            // TODO 过滤已移除的车和单
             this.builder.addInitialVehicleRoutes(reader.getRoutes());
         }
         return this;
+    }
+
+    public void cancelVehicle(){
+
+    }
+
+    public void cancelJob(){
+
     }
 
     public JspritWrapper addVehicles(List<BasicVehicle> vehicles) {
@@ -119,10 +127,10 @@ public class JspritWrapper {
         return this;
     }
 
-    public JspritWrapper setDefaultBaiduRoutingCost(boolean isSymmetric) {
+    public JspritWrapper setDefaultBaiduRoutingCost() {
         Map<String, Coordinate> locationMap = getLocationMap();
         BatchBaiduVehicleRoutingTransportCostsMatrix matrix =
-                new BatchBaiduVehicleRoutingTransportCostsMatrix(locationMap, isSymmetric);
+                new BatchBaiduVehicleRoutingTransportCostsMatrix(locationMap, false);
         setRoutingCost(matrix);
         return this;
     }
@@ -177,7 +185,7 @@ public class JspritWrapper {
         return Solutions.bestOf(this.solutions);
     }
 
-    public void print() {
+    public void printBestSolution() {
         SolutionPrinter.print(this.problem, bestOfSolutions(), SolutionPrinter.Print.VERBOSE);
     }
 

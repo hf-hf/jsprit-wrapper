@@ -3,9 +3,12 @@ package com.diditech.vrp.utils;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import com.diditech.vrp.solution.InitialRoutesBean;
 import com.diditech.vrp.solution.Problem;
 import com.diditech.vrp.solution.ProblemType;
 import com.diditech.vrp.solution.Shipments;
@@ -50,6 +53,8 @@ public class VrpResultReader {
     private List<VehicleRoute> routes;
 
     private Collection<VehicleRoutingProblemSolution> solutionList = new ArrayList<>();
+
+    private Set<String> freezedJobIds = new HashSet<String>();
 
     public VrpResultReader(VehicleRoutingProblem.Builder vrpBuilder, Problem problem) {
         this.vrpBuilder = vrpBuilder;
@@ -387,31 +392,30 @@ public class VrpResultReader {
 
     }
 
-//    private void readInitialRoutes() {
-//        List<HierarchicalConfiguration> initialRouteConfigs = xmlConfig.configurationsAt("initialRoutes.route");
-//        for (HierarchicalConfiguration routeConfig : initialRouteConfigs) {
-//            Driver driver = DriverImpl.noDriver();
-//            String vehicleId = routeConfig.getString("vehicleId");
-//            Vehicle vehicle = getVehicle(vehicleId);
-//            if (vehicle == null) throw new IllegalArgumentException("vehicle is missing.");
-//            String start = routeConfig.getString("start");
-//            if (start == null) throw new IllegalArgumentException("route start-time is missing.");
-//            double departureTime = Double.parseDouble(start);
-//
-//            VehicleRoute.Builder routeBuilder = VehicleRoute.Builder.newInstance(vehicle, driver);
-//            routeBuilder.setDepartureTime(departureTime);
-//
-//            List<HierarchicalConfiguration> actConfigs = routeConfig.configurationsAt("act");
-//            for (HierarchicalConfiguration actConfig : actConfigs) {
-//                String type = actConfig.getString("[@type]");
-//                if (type == null) throw new IllegalArgumentException("act[@type] is missing.");
-//                double arrTime = 0.;
-//                double endTime = 0.;
-//                String arrTimeS = actConfig.getString("arrTime");
-//                if (arrTimeS != null) arrTime = Double.parseDouble(arrTimeS);
-//                String endTimeS = actConfig.getString("endTime");
-//                if (endTimeS != null) endTime = Double.parseDouble(endTimeS);
-//
+    private void readInitialRoutes() {
+        InitialRoutesBean initialRoutesBean = problem.getInitialRoutes();
+        if(null == initialRoutesBean){
+            return;
+        }
+        for (InitialRoutesBean.RouteBean routeConfig : initialRoutesBean.getRoute()) {
+            Driver driver = DriverImpl.noDriver();
+            String vehicleId = routeConfig.getVehicleId();
+            Vehicle vehicle = getVehicle(vehicleId);
+            if (vehicle == null) throw new IllegalArgumentException("vehicle is missing.");
+            Double start = routeConfig.getStart();
+            if (start == null) throw new IllegalArgumentException("route start-time is missing.");
+            double departureTime = start;
+
+            VehicleRoute.Builder routeBuilder = VehicleRoute.Builder.newInstance(vehicle, driver);
+            routeBuilder.setDepartureTime(departureTime);
+
+            List<Act> actConfigs = routeConfig.getAct();
+            for (Act actConfig : actConfigs) {
+                String type = actConfig.getType();
+                if (type == null) throw new IllegalArgumentException("act[@type] is missing.");
+                Long arrTime = actConfig.getArrTime();
+                Long endTime = actConfig.getEndTime();
+
 //                String serviceId = actConfig.getString("serviceId");
 //                if(type.equals("break")) {
 //                    Break currentbreak = getBreak(vehicleId);
@@ -426,27 +430,27 @@ public class VrpResultReader {
 //                        freezedJobIds.add(serviceId);
 //                        routeBuilder.addService(service);
 //                    } else {
-//                        String shipmentId = actConfig.getString("shipmentId");
-//                        if (shipmentId == null)
-//                            throw new IllegalArgumentException("either serviceId or shipmentId is missing");
-//                        Shipment shipment = getShipment(shipmentId);
-//                        if (shipment == null)
-//                            throw new IllegalArgumentException("shipment to shipmentId " + shipmentId + " is missing (reference in one of your initial routes). make sure you define the shipment you refer to here in <shipments> </shipments>.");
-//                        freezedJobIds.add(shipmentId);
-//                        if (type.equals("pickupShipment")) {
-//                            routeBuilder.addPickup(shipment);
-//                        } else if (type.equals("deliverShipment")) {
-//                            routeBuilder.addDelivery(shipment);
-//                        } else
-//                            throw new IllegalArgumentException("type " + type + " is not supported. Use 'pickupShipment' or 'deliverShipment' here");
-//                    }
-//                }
-//            }
-//            VehicleRoute route = routeBuilder.build();
-//            vrpBuilder.addInitialVehicleRoute(route);
-//        }
-//
-//    }
+                        String shipmentId = actConfig.getShipmentId();
+                        if (shipmentId == null)
+                            throw new IllegalArgumentException("either serviceId or shipmentId is missing");
+                        Shipment shipment = getShipment(shipmentId);
+                        if (shipment == null)
+                            throw new IllegalArgumentException("shipment to shipmentId " + shipmentId + " is missing (reference in one of your initial routes). make sure you define the shipment you refer to here in <shipments> </shipments>.");
+                        freezedJobIds.add(shipmentId);
+                        if (type.equals("pickupShipment")) {
+                            routeBuilder.addPickup(shipment);
+                        } else if (type.equals("deliverShipment")) {
+                            routeBuilder.addDelivery(shipment);
+                        } else
+                            throw new IllegalArgumentException("type " + type + " is not supported. Use 'pickupShipment' or 'deliverShipment' here");
+                    //}
+                //}
+            }
+            VehicleRoute route = routeBuilder.build();
+            vrpBuilder.addInitialVehicleRoute(route);
+        }
+
+    }
 
     private void addJobsAndTheirLocationsToVrp() {
 //        for (Service service : serviceMap.values()) {
@@ -455,9 +459,9 @@ public class VrpResultReader {
 //            }
 //        }
         for (Shipment shipment : shipmentMap.values()) {
-            //if (!freezedJobIds.contains(shipment.getId())) {
-            vrpBuilder.addJob(shipment);
-            //}
+            if (!freezedJobIds.contains(shipment.getId())) {
+                vrpBuilder.addJob(shipment);
+            }
         }
     }
 

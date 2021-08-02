@@ -5,6 +5,7 @@ import java.util.Map;
 
 import com.diditech.vrp.IBuilder;
 import com.diditech.vrp.JspritConfig;
+import com.diditech.vrp.enums.TacticsEnum;
 import com.diditech.vrp.remote.BaiduApi;
 import com.diditech.vrp.remote.BaiduResponse;
 import com.graphhopper.jsprit.core.problem.Location;
@@ -12,7 +13,7 @@ import com.graphhopper.jsprit.core.problem.cost.AbstractForwardVehicleRoutingTra
 import com.graphhopper.jsprit.core.problem.driver.Driver;
 import com.graphhopper.jsprit.core.problem.vehicle.Vehicle;
 import com.graphhopper.jsprit.core.util.Coordinate;
-import com.graphhopper.jsprit.core.util.FastVehicleRoutingTransportCostsMatrix;
+import com.graphhopper.jsprit.core.util.VehicleRoutingTransportCostsMatrix;
 
 /**
  * 百度车辆路径运输成本矩阵
@@ -20,25 +21,24 @@ import com.graphhopper.jsprit.core.util.FastVehicleRoutingTransportCostsMatrix;
  * @author hefan
  * @date 2021/7/8 14:55
  */
-public class BaiduVehicleRoutingTransportCostsMatrix extends AbstractForwardVehicleRoutingTransportCosts
-        implements IBuilder<FastVehicleRoutingTransportCostsMatrix> {
+public class BaiduVehicleRoutingTransportCostsMatrix
+        extends AbstractForwardVehicleRoutingTransportCosts
+        implements IBuilder<VehicleRoutingTransportCostsMatrix> {
 
-    private FastVehicleRoutingTransportCostsMatrix.Builder builder;
+    private VehicleRoutingTransportCostsMatrix.Builder builder;
 
-    private FastVehicleRoutingTransportCostsMatrix matrix;
+    private VehicleRoutingTransportCostsMatrix matrix;
 
     private Map<String, Coordinate> map;
 
-    private JspritConfig config;
+    private TacticsEnum tacticsEnum = JspritConfig.getInstance().getTactics();
 
     public BaiduVehicleRoutingTransportCostsMatrix(Map<String, Coordinate> locationMap,
-                                                   JspritConfig config,
                                                    boolean isSymmetric) {
         this.map = locationMap;
-        this.config = config;
-        this.builder = FastVehicleRoutingTransportCostsMatrix.Builder
-                .newInstance(locationMap.size(), isSymmetric);
-        load();
+        this.builder = VehicleRoutingTransportCostsMatrix.Builder
+                .newInstance(isSymmetric);
+        this.load();
         // 判断是否加载成功
         this.matrix = this.builder.build();
     }
@@ -52,22 +52,23 @@ public class BaiduVehicleRoutingTransportCostsMatrix extends AbstractForwardVehi
             fromCoord = map.get(from);
             for (String to : map.keySet()) {
                 toCoord = map.get(to);
-                BaiduResponse response = BaiduApi.singleRouteMatrix(fromCoord, toCoord, config.getTactics());
+                BaiduResponse response = BaiduApi.singleRouteMatrix(fromCoord, toCoord,
+                        tacticsEnum);
                 if (0 != response.getStatus()) {
                     continue;
                 }
                 List<BaiduResponse.ResultBean> result = response.getResult();
                 distance = result.get(0).getDistance().getValue();
                 duration = result.get(0).getDuration().getValue() * 1000;
-                builder.addTransportTimeAndDistance(Integer.parseInt(from), Integer.parseInt(to),
-                        duration, distance);
+                builder.addTransportDistance(from, to, distance);
+                builder.addTransportTime(from, to, duration);
                 //System.out.println(Integer.parseInt(from) + "-" + Integer.parseInt(to));
             }
         }
     }
 
     @Override
-    public FastVehicleRoutingTransportCostsMatrix build() {
+    public VehicleRoutingTransportCostsMatrix build() {
         return this.matrix;
     }
 

@@ -11,7 +11,7 @@ import com.diditech.vrp.vehicle.type.BasicVehicleType;
 public class FourSeatVehicleWithTimeWindow extends BasicVehicleWithTimeWindow {
 
     public FourSeatVehicleWithTimeWindow(String id) {
-        super(id, new BasicVehicleType(id, 4));
+        super(id, new BasicVehicleType(4));
     }
 
 }

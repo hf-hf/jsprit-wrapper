@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class Point {
 
-    private int id;
+    private String id;
 
     private double lng;
 
@@ -27,7 +27,7 @@ public class Point {
     @Deprecated
     public static Point convert(Location location){
         Coordinate coordinate = location.getCoordinate();
-        return new Point(Integer.valueOf(location.getId()),
+        return new Point(location.getId(),
                 coordinate.getX(), coordinate.getY());
     }
 
@@ -39,9 +39,14 @@ public class Point {
     public Location loc() {
         return Location.Builder.newInstance()
                 .setCoordinate(Coordinate.newInstance(lng, lat))
-                .setIndex(id)
-                .setId(id + "")
+                // 不使用，默认为0
+                .setIndex(0)
+                .setId(id)
                 .build();
+    }
+
+    public static Point create(double lng, double lat) {
+        return new Point(lng, lat);
     }
 
 }

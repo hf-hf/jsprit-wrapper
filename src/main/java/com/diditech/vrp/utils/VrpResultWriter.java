@@ -2,6 +2,9 @@ package com.diditech.vrp.utils;
 
 import java.io.OutputStream;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import com.diditech.vrp.solution.Problem;
 import com.graphhopper.jsprit.core.problem.VehicleRoutingProblem;
@@ -21,12 +24,18 @@ public class VrpResultWriter {
 
     public Problem write(VehicleRoutingProblem problem,
                          Collection<VehicleRoutingProblemSolution> solutions,
+                         Map<String, List<Point>> wayPointsMap,
                          boolean onlyBestSolution) {
         OutputStream xmlOutputStream = new VrpXMLWriter(problem, solutions,
                 onlyBestSolution).write();
         String xmlOutput = xmlOutputStream.toString();
         JSONObject jsonObject = JSONUtil.parseFromXml(xmlOutput);
-        return jsonObject.getJSONObject("problem").toBean(Problem.class);
+        Problem result = jsonObject.getJSONObject("problem").toBean(Problem.class);
+        if(null == wayPointsMap){
+            wayPointsMap = new HashMap<>(0);
+        }
+        result.setWayPointsMap(wayPointsMap);
+        return result;
     }
 
 }

@@ -7,11 +7,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.alibaba.fastjson.JSON;
 import com.diditech.vrp.remote.BaiduApi;
 import com.diditech.vrp.remote.BaiduResponse;
-import com.diditech.vrp.solution.Problem;
-import com.diditech.vrp.utils.VrpResultWriter;
 import com.graphhopper.jsprit.analysis.toolbox.GraphStreamViewer;
 import com.graphhopper.jsprit.analysis.toolbox.Plotter;
 import com.graphhopper.jsprit.core.algorithm.VehicleRoutingAlgorithm;
@@ -121,8 +118,8 @@ public class OriginDemoTest {
          */
         new VrpXMLWriter(problem, solutions).write("output/shipment-problem-with-solution.xml");
 
-        Problem problem1 = new VrpResultWriter().write(problem, solutions, true);
-        System.out.println(JSON.toJSONString(problem1));
+//        Problem problem1 = new VrpResultWriter().write(problem, solutions, true);
+//        System.out.println(JSON.toJSONString(problem1));
 //
 //        List<VehicleRoutingProblemSolution> solutions1 =
 //                JSONUtil.toList(jsonObj.getJSONArray("solutions"),

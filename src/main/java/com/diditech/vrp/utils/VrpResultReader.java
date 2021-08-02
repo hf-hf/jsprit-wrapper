@@ -32,6 +32,7 @@ import com.graphhopper.jsprit.core.problem.vehicle.VehicleType;
 import com.graphhopper.jsprit.core.problem.vehicle.VehicleTypeImpl;
 import com.graphhopper.jsprit.core.util.Coordinate;
 
+import cn.hutool.core.collection.CollectionUtil;
 import lombok.Data;
 
 /**
@@ -54,11 +55,31 @@ public class VrpResultReader {
 
     private Collection<VehicleRoutingProblemSolution> solutionList = new ArrayList<>();
 
-    private Set<String> freezedJobIds = new HashSet<String>();
+    //private Set<String> freezedJobIds = new HashSet<String>();
+
+    private Set<String> releasedJobIds = new HashSet<>();
+
+    private Set<String> releasedVehicleIds = new HashSet<>();
+
+    private Map<String, List<Point>> wayPointsMap = new HashMap<>();
 
     public VrpResultReader(VehicleRoutingProblem.Builder vrpBuilder, Problem problem) {
         this.vrpBuilder = vrpBuilder;
         this.problem = problem;
+    }
+
+    public VrpResultReader addReleasedJobIds(Collection<String> ids){
+        if(CollectionUtil.isNotEmpty(ids)){
+            this.releasedJobIds.addAll(ids);
+        }
+        return this;
+    }
+
+    public VrpResultReader addReleasedVehicleIds(Collection<String> ids){
+        if(CollectionUtil.isNotEmpty(ids)){
+            this.releasedVehicleIds.addAll(ids);
+        }
+        return this;
     }
 
     public VrpResultReader read() {
@@ -73,6 +94,10 @@ public class VrpResultReader {
 
         addJobsAndTheirLocationsToVrp();
         return this;
+    }
+
+    public boolean hasRoutes(){
+        return CollectionUtil.isNotEmpty(this.routes);
     }
 
     private void readProblemType() {
@@ -90,7 +115,9 @@ public class VrpResultReader {
         for (Shipments.Shipment shipment : shipments.getShipment()) {
             String id = shipment.getId();
             if (id == null) throw new IllegalArgumentException("shipment[@id] is missing.");
-
+            if(releasedJobIds.contains(id)){
+                continue;
+            }
             Shipments.Shipment.CapacitydimensionsBean capacityDimensions = shipment.getCapacitydimensions();
             if (null == capacityDimensions || null == capacityDimensions.getDimension()) {
                 throw new IllegalArgumentException("capacity of shipment is not set.");
@@ -197,6 +224,9 @@ public class VrpResultReader {
                 //! here, driverId is set to noDriver, no matter whats in driverId.
                 Driver driver = DriverImpl.noDriver();
                 String vehicleId = routeConfig.getVehicleId();
+                if(releasedVehicleIds.contains(vehicleId)){
+                    continue;
+                }
                 Vehicle vehicle = getVehicle(vehicleId);
                 if (vehicle == null) throw new IllegalArgumentException("vehicle is missing.");
                 Long start = routeConfig.getStart();
@@ -229,6 +259,9 @@ public class VrpResultReader {
 //                            routeBuilder.addService(service);
 //                        } else {
                             String shipmentId = actConfig.getShipmentId();
+                            if(releasedJobIds.contains(shipmentId)){
+                                continue;
+                            }
                             if (shipmentId == null)
                                 throw new IllegalArgumentException("either serviceId or shipmentId is missing");
                             Shipment shipment = getShipment(shipmentId);
@@ -300,6 +333,9 @@ public class VrpResultReader {
         for (VehiclesBean.Vehicle vehicleConfig : vehiclesBean.getVehicle()) {
             String vehicleId = vehicleConfig.getId();
             if (vehicleId == null) throw new IllegalArgumentException("vehicleId is missing.");
+            if(releasedVehicleIds.contains(vehicleId)){
+                continue;
+            }
             VehicleImpl.Builder builder = VehicleImpl.Builder.newInstance(vehicleId);
             String typeId = vehicleConfig.getTypeId();
             if (typeId == null) throw new IllegalArgumentException("typeId is missing.");
@@ -400,6 +436,9 @@ public class VrpResultReader {
         for (InitialRoutesBean.RouteBean routeConfig : initialRoutesBean.getRoute()) {
             Driver driver = DriverImpl.noDriver();
             String vehicleId = routeConfig.getVehicleId();
+            if(releasedVehicleIds.contains(vehicleId)){
+                continue;
+            }
             Vehicle vehicle = getVehicle(vehicleId);
             if (vehicle == null) throw new IllegalArgumentException("vehicle is missing.");
             Double start = routeConfig.getStart();
@@ -433,10 +472,13 @@ public class VrpResultReader {
                         String shipmentId = actConfig.getShipmentId();
                         if (shipmentId == null)
                             throw new IllegalArgumentException("either serviceId or shipmentId is missing");
+                        if(releasedJobIds.contains(shipmentId)){
+                            continue;
+                        }
                         Shipment shipment = getShipment(shipmentId);
                         if (shipment == null)
                             throw new IllegalArgumentException("shipment to shipmentId " + shipmentId + " is missing (reference in one of your initial routes). make sure you define the shipment you refer to here in <shipments> </shipments>.");
-                        freezedJobIds.add(shipmentId);
+                        //freezedJobIds.add(shipmentId);
                         if (type.equals("pickupShipment")) {
                             routeBuilder.addPickup(shipment);
                         } else if (type.equals("deliverShipment")) {
@@ -459,9 +501,10 @@ public class VrpResultReader {
 //            }
 //        }
         for (Shipment shipment : shipmentMap.values()) {
-            if (!freezedJobIds.contains(shipment.getId())) {
+            //if (!freezedJobIds.contains(shipment.getId())) {
                 vrpBuilder.addJob(shipment);
-            }
+                addWayPoints(shipment.getId());
+            //}
         }
     }
 
@@ -472,5 +515,17 @@ public class VrpResultReader {
     private Shipment getShipment(String shipmentId) {
         return shipmentMap.get(shipmentId);
     }
+
+    private void addWayPoints(String shipmentId) {
+        Map<String, List<Point>> map = this.problem.getWayPointsMap();
+        if(CollectionUtil.isEmpty(map)){
+            return;
+        }
+        List<Point> list = map.get(shipmentId);
+        if(CollectionUtil.isEmpty(list)) {
+            wayPointsMap.put(shipmentId, list);
+        }
+    }
+
 
 }

@@ -132,7 +132,7 @@ public class OriginDemoTest2 {
 //        builder2.
 
         BaiduVehicleRoutingTransportCostsMatrix matrix =
-                new BaiduVehicleRoutingTransportCostsMatrix(vrpBuilder.getLocationMap(), null, false);
+                new BaiduVehicleRoutingTransportCostsMatrix(vrpBuilder.getLocationMap(), false);
         vrpBuilder.setRoutingCost(matrix);
 
         //matrix.getMatrix();
@@ -162,7 +162,8 @@ public class OriginDemoTest2 {
          */
         new VrpXMLWriter(problem, solutions).write("output/shipment-problem-with-solution.xml");
 
-        Problem problem1 = new VrpResultWriter().write(problem, solutions, true);
+        Problem problem1 = new VrpResultWriter().write(problem, solutions,
+                null, true);
         System.out.println(JSON.toJSONString(problem1));
 
         /*

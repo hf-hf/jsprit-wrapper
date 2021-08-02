@@ -1,7 +1,7 @@
 package com.diditech.vrp;
 
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -20,14 +20,20 @@ import com.graphhopper.jsprit.core.algorithm.VehicleRoutingAlgorithm;
 import com.graphhopper.jsprit.core.algorithm.box.Jsprit;
 import com.graphhopper.jsprit.core.problem.VehicleRoutingProblem;
 import com.graphhopper.jsprit.core.problem.cost.VehicleRoutingTransportCosts;
+import com.graphhopper.jsprit.core.problem.job.Delivery;
+import com.graphhopper.jsprit.core.problem.job.Pickup;
+import com.graphhopper.jsprit.core.problem.job.Service;
+import com.graphhopper.jsprit.core.problem.job.Shipment;
 import com.graphhopper.jsprit.core.problem.solution.VehicleRoutingProblemSolution;
 import com.graphhopper.jsprit.core.problem.solution.route.VehicleRoute;
+import com.graphhopper.jsprit.core.problem.solution.route.activity.TimeWindow;
 import com.graphhopper.jsprit.core.problem.vehicle.VehicleImpl;
 import com.graphhopper.jsprit.core.reporting.SolutionPrinter;
 import com.graphhopper.jsprit.core.util.Coordinate;
 import com.graphhopper.jsprit.core.util.Solutions;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ObjectUtil;
 
 /**
@@ -37,8 +43,6 @@ import cn.hutool.core.util.ObjectUtil;
  * @date 2021/7/8 15:11
  */
 public class JspritWrapper {
-
-    protected JspritConfig config = JspritConfig.DEFAULT;
 
     protected VehicleRoutingProblem.Builder builder = VehicleRoutingProblem.Builder.newInstance();
 
@@ -52,8 +56,6 @@ public class JspritWrapper {
 
     protected List<ShipmentJob> jobList = new LinkedList<>();
 
-    protected int pointNumber = 0;
-
     /**
      * 默认车队规模为有限
      */
@@ -62,12 +64,27 @@ public class JspritWrapper {
 
     protected VehicleRoutingProblem.FleetSize fleetSize = DEFAULT_FLEET_SIZE;
 
-    protected Set<String> frozenJobIds = new HashSet<>();
+    protected Set<String> releasedJobIds = new HashSet<>();
 
-    protected Set<String> frozenVehicleIds = new HashSet<>();
+    protected Set<String> releasedVehicleIds = new HashSet<>();
+
+    protected VrpResultReader reader = null;
+
+    /**
+     * 途经点
+     */
+    protected Map<String, List<Point>> wayPointsMap = new HashMap<>();
 
     public static JspritWrapper create() {
         return new JspritWrapper();
+    }
+
+    public static JspritWrapper create(List<String> releasedJobIds,
+                                       List<String> releasedVehicleIds) {
+        JspritWrapper wrapper = create();
+        wrapper.addReleaseVehicles(releasedVehicleIds);
+        wrapper.addReleaseJobs(releasedJobIds);
+        return wrapper;
     }
 
     public JspritWrapper setFleetSize(VehicleRoutingProblem.FleetSize fleetSize) {
@@ -75,44 +92,96 @@ public class JspritWrapper {
         return this;
     }
 
-    /**
-     * 加载规划配置
-     */
-    public JspritWrapper setConfig(JspritConfig config) {
-        this.config = config;
+    private JspritWrapper addReleaseVehicles(List<String> vehicleIds) {
+        if(CollectionUtil.isNotEmpty(vehicleIds)) {
+            releasedVehicleIds.addAll(vehicleIds);
+        }
         return this;
     }
 
-    /**
-     * 冻结车辆
-     */
-    public JspritWrapper freezeVehicle(String vehicleId) {
-        frozenJobIds.add(vehicleId);
+    private JspritWrapper addReleaseJobs(List<String> jobIds) {
+        if(CollectionUtil.isNotEmpty(jobIds)){
+            releasedJobIds.addAll(jobIds);
+        }
         return this;
     }
 
-    /**
-     * 冻结订单
-     */
-    public JspritWrapper freezeJob(String jobId) {
-        frozenVehicleIds.add(jobId);
-        return this;
+    private void addInitialWayPointsMap(Map<String, List<Point>>lastWayPointsMap,
+                                  Map<String, Shipment> shipmentMap){
+        List<Point> points;
+        for (String jobId : shipmentMap.keySet()) {
+            if(shipmentMap.containsKey(jobId)){
+                addWayPoints(jobId, lastWayPointsMap.get(jobId));
+            }
+        }
+    }
+
+    private void addWayPoints(String jobId, List<Point> wayPoints){
+        if(CollectionUtil.isEmpty(wayPoints)){
+            return;
+        }
+        if(wayPointsMap.containsKey(jobId)){
+            throw new IllegalArgumentException("repeated way points");
+        }
+        wayPointsMap.put(jobId, wayPoints);
     }
 
     public JspritWrapper addInitialVehicleRoutes(Problem lastProblem) {
         if (ObjectUtil.isNotNull(lastProblem)) {
             // 加载之前的单记录
-            VrpResultReader reader =
-                    new VrpResultReader(this.builder, lastProblem).read();
-            this.builder.addInitialVehicleRoutes(filterFrozen(reader.getRoutes()));
+            reader = new VrpResultReader(this.builder, lastProblem)
+                            .addReleasedVehicleIds(releasedVehicleIds)
+                            .addReleasedJobIds(releasedJobIds)
+                    .read();
+            this.builder.addInitialVehicleRoutes(reader.getRoutes());
+            addInitialWayPointsMap(lastProblem.getWayPointsMap(), reader.getShipmentMap());
         }
         return this;
     }
 
-    private List<VehicleRoute> filterFrozen(List<VehicleRoute> routes){
-        return routes;
+    public JspritWrapper addInitialShipments(Map<String, ShipmentJob> initJobMap){
+        for (String vehicleId : initJobMap.keySet()) {
+            addInitialShipment(vehicleId, initJobMap.get(vehicleId));
+        }
+        return this;
     }
 
+    /**
+     * 空车初始单，需要手动创建2个vehicleRoute（pickup、delivery），并分配时间
+     * @author hefan
+     * @date 2021/7/30 13:57
+     */
+    public JspritWrapper addInitialShipment(String vehicleId, ShipmentJob job){
+        // 从车的起始点-job起始点-job结束点
+        VehicleImpl vehicle = vehicleMap.get(vehicleId);
+        if(ObjectUtil.isNull(vehicle)){
+            throw new RuntimeException("not find vehicle");
+        }
+        // TODO 计算开始结束
+        // 构造vehicleRoute
+        Date pickupStart = job.getDate();
+        Date pickupEnd = DateUtil.offsetMinute(job.getDate(),
+                JspritConfig.getInstance().getPickup_wait_minutes());
+        Date deliveryStart = DateUtil.offsetMinute(job.getDate(),
+                JspritConfig.getInstance().getDelivery_wait_start_minutes());
+        Date deliveryend = DateUtil.offsetMinute(job.getDate(),
+                JspritConfig.getInstance().getDelivery_wait_end_minutes());
+        VehicleRoute.Builder vrBuilder = VehicleRoute.Builder.newInstance(vehicle);
+        Service.Builder<Pickup> pickup = Pickup.Builder.newInstance(job.getId())
+                .setLocation(job.getPickupPoint().loc())
+                .setTimeWindow(new TimeWindow(pickupStart.getTime(), pickupEnd.getTime()))
+                .addSizeDimension(0, job.getSizeDimension())
+                .addAllRequiredSkills(job.getSkills());
+        Service.Builder<Delivery> delivery = Delivery.Builder.newInstance(job.getId())
+                .setLocation(job.getPickupPoint().loc())
+                .setTimeWindow(new TimeWindow(deliveryStart.getTime(), deliveryend.getTime()))
+                .addSizeDimension(0, job.getSizeDimension())
+                .addAllRequiredSkills(job.getSkills());
+        vrBuilder.addPickup(pickup.build());
+        vrBuilder.addDelivery(delivery.build());
+        this.builder.addInitialVehicleRoute(vrBuilder.build());
+        return this;
+    }
 
     public JspritWrapper addVehicles(List<BasicVehicle> vehicles) {
         if (CollectionUtil.isNotEmpty(vehicles)) {
@@ -123,7 +192,6 @@ public class JspritWrapper {
 
     public JspritWrapper addVehicle(BasicVehicle vehicle) {
         if (ObjectUtil.isNotNull(vehicle)) {
-            fillPointId(vehicle.getStartPoint(), vehicle.getEndPoint());
             VehicleImpl vehicleImpl = vehicle.build();
             this.vehicleMap.put(vehicle.getId(), vehicleImpl);
             this.builder.addVehicle(vehicleImpl);
@@ -138,10 +206,9 @@ public class JspritWrapper {
         return this;
     }
 
-
     public JspritWrapper addJob(ShipmentJob job) {
         if (ObjectUtil.isNotNull(job)) {
-            fillPointId(job.getPickupPoint(), job.getDeliveryPoint());
+            addWayPoints(job.getId(), job.getWayPoints());
             this.jobList.add(job);
             this.builder.addJob(job.build());
         }
@@ -151,8 +218,7 @@ public class JspritWrapper {
     public JspritWrapper setDefaultBaiduRoutingCost() {
         Map<String, Coordinate> locationMap = getLocationMap();
         BaiduVehicleRoutingTransportCostsMatrix matrix =
-                new BaiduVehicleRoutingTransportCostsMatrix(locationMap,
-                        this.config, false);
+                new BaiduVehicleRoutingTransportCostsMatrix(locationMap, false);
         setRoutingCost(matrix);
         return this;
     }
@@ -196,7 +262,8 @@ public class JspritWrapper {
     }
 
     public Problem getProblem(boolean onlyBestSolution) {
-        return new VrpResultWriter().write(this.problem, this.solutions, onlyBestSolution);
+        return new VrpResultWriter().write(this.problem, this.solutions,
+                this.wayPointsMap, onlyBestSolution);
     }
 
     public Map<String, Coordinate> getLocationMap() {
@@ -209,24 +276,6 @@ public class JspritWrapper {
 
     public void printBestSolution() {
         SolutionPrinter.print(this.problem, bestOfSolutions(), SolutionPrinter.Print.VERBOSE);
-    }
-
-    private int getAndAddNumber() {
-        return pointNumber++;
-    }
-
-    /**
-     * 填充点id
-     *
-     * @author hefan
-     * @date 2021/7/20 9:30
-     */
-    private void fillPointId(Point... points) {
-        Arrays.stream(points).forEach(p -> {
-            if (ObjectUtil.isNotNull(p)) {
-                p.setId(getAndAddNumber());
-            }
-        });
     }
 
 }

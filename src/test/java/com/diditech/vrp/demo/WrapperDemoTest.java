@@ -36,16 +36,16 @@ public class WrapperDemoTest {
     };
 
     private static List<Point> pointList = new ArrayList<Point>(){
-        {add(new Point(0, 120.421761, 36.119647));}
-        {add(new Point(1, 120.493554, 36.156635));}
-        {add(new Point(2, 120.399124,36.178779));}
-        {add(new Point(3, 120.493266,36.155936));}
-        {add(new Point(4, 120.42212,36.223048));}
-        {add(new Point(5, 120.490535,36.156286));}
-        {add(new Point(6, 120.450147,36.111396));}
-        {add(new Point(7, 120.379145,36.174118));}
-        {add(new Point(8, 120.423989,36.152556));}
-        {add(new Point(9, 120.364773,36.086433));}
+        {add(new Point("0", 120.421761, 36.119647));}
+        {add(new Point("1", 120.493554, 36.156635));}
+        {add(new Point("2", 120.399124,36.178779));}
+        {add(new Point("3", 120.493266,36.155936));}
+        {add(new Point("4", 120.42212,36.223048));}
+        {add(new Point("5", 120.490535,36.156286));}
+        {add(new Point("6", 120.450147,36.111396));}
+        {add(new Point("7", 120.379145,36.174118));}
+        {add(new Point("8", 120.423989,36.152556));}
+        {add(new Point("9", 120.364773,36.086433));}
     };
 
     public static void main(String[] args) throws UnsupportedEncodingException {
@@ -133,7 +133,7 @@ public class WrapperDemoTest {
         ShipmentJob shipmentJob =
                 new ShipmentJob(name, 1, point1, point2)
                 //.setDeliveryTimeWindow()
-                .setPickupTimeWindow(date, DateUtil.offsetMinute(date, 10));
+                .setPickupTimeWindow(date);
         return shipmentJob;
     }
 

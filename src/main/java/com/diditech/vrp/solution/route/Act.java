@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 public class Act {
     private String type;
 
+    private String serviceId;
+
     private String shipmentId;
 
     private long arrTime;

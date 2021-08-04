@@ -3,11 +3,12 @@ package com.diditech.vrp.demo;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import com.alibaba.fastjson.JSON;
-import com.diditech.vrp.remote.BaiduResponse;
+import com.diditech.vrp.remote.BaiduRouteMatrixResponse;
 import com.diditech.vrp.solution.Problem;
 import com.diditech.vrp.solution.costsMatrix.BaiduVehicleRoutingTransportCostsMatrix;
 import com.diditech.vrp.utils.VrpResultReader;
@@ -132,7 +133,7 @@ public class OriginDemoTest2 {
 //        builder2.
 
         BaiduVehicleRoutingTransportCostsMatrix matrix =
-                new BaiduVehicleRoutingTransportCostsMatrix(vrpBuilder.getLocationMap(), false);
+                new BaiduVehicleRoutingTransportCostsMatrix(vrpBuilder.getLocationMap(), false, new HashMap<>());
         vrpBuilder.setRoutingCost(matrix);
 
         //matrix.getMatrix();
@@ -187,11 +188,11 @@ public class OriginDemoTest2 {
 
 
 
-    private static FastVehicleRoutingTransportCostsMatrix createMatrix(int size, BaiduResponse response){
+    private static FastVehicleRoutingTransportCostsMatrix createMatrix(int size, BaiduRouteMatrixResponse response){
         FastVehicleRoutingTransportCostsMatrix.Builder builder = FastVehicleRoutingTransportCostsMatrix.Builder
                 .newInstance(size, false);
 
-        List<BaiduResponse.ResultBean> result = response.getResult();
+        List<BaiduRouteMatrixResponse.ResultBean> result = response.getResult();
         int index = 0;
         for(int i=0;i < size;i++){
             for(int j=0;j < size;j++){

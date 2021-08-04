@@ -28,22 +28,22 @@ public class BaiduApi {
 
     private static final String ROUTE_MATRIX_URL = "http://api.map.baidu.com/routematrix/v2/driving";
 
-    private static final String LITE_DIRECTION_DRIVING_URL = "https://api.map.baidu.com/direction/v2/motorcycle";
+    private static final String LITE_DIRECTION_DRIVING_URL = "https://api.map.baidu.com/directionlite/v1/driving";
 
-    public BaiduResponse liteDirectionDriving(Coordinate from, Coordinate to,
-                                     TacticsEnum tactics, List<Point> wayPoints){
-        String origins = from.getY() + "," + from.getX();
-        String destinations = to.getY() + "," + to.getX();
+    public BaiduLiteDirectionResponse liteDirectionDriving(Coordinate from, Coordinate to,
+                                                           TacticsEnum tactics, List<Point> wayPoints){
+        String origin = from.getY() + "," + from.getX();
+        String destination = to.getY() + "," + to.getX();
         Map<String, Object> paramMap = new HashMap<>(4);
-        paramMap.put("origins", origins);
-        paramMap.put("destinations", destinations);
+        paramMap.put("origin", origin);
+        paramMap.put("destination", destination);
         paramMap.put("ak", getAk());
         paramMap.put("tactics", tactics.getValue());
         if(CollectionUtil.isNotEmpty(wayPoints)){
             paramMap.put("waypoints", getMultiPointsStr(wayPoints));
         }
         String jsonString = HttpUtil.get(LITE_DIRECTION_DRIVING_URL, paramMap);
-        BaiduResponse response = JSONUtil.toBean(jsonString, BaiduResponse.class);
+        BaiduLiteDirectionResponse response = JSONUtil.toBean(jsonString, BaiduLiteDirectionResponse.class);
         return response;
     }
 
@@ -56,7 +56,7 @@ public class BaiduApi {
         return pointSb.substring(0, pointSb.length() - 1);
     }
 
-    public BaiduResponse singleRouteMatrix(Coordinate from, Coordinate to, TacticsEnum tactics) {
+    public BaiduRouteMatrixResponse singleRouteMatrix(Coordinate from, Coordinate to, TacticsEnum tactics) {
         String origins = from.getY() + "," + from.getX();
         String destinations = to.getY() + "," + to.getX();
         Map<String, Object> paramMap = new HashMap<>(3);
@@ -65,11 +65,11 @@ public class BaiduApi {
         paramMap.put("ak", getAk());
         paramMap.put("tactics", tactics.getValue());
         String jsonString = HttpUtil.get(ROUTE_MATRIX_URL, paramMap);
-        BaiduResponse response = JSONUtil.toBean(jsonString, BaiduResponse.class);
+        BaiduRouteMatrixResponse response = JSONUtil.toBean(jsonString, BaiduRouteMatrixResponse.class);
         return response;
     }
 
-    public BaiduResponse routeMatrix(Map<String, Coordinate> map) {
+    public BaiduRouteMatrixResponse routeMatrix(Map<String, Coordinate> map) {
         StringBuilder locBuilder = new StringBuilder();
         for (Coordinate coordinate : map.values()) {
             locBuilder.append(coordinate.getY() + "," + coordinate.getX())
@@ -81,11 +81,11 @@ public class BaiduApi {
         paramMap.put("destinations", locations);
         paramMap.put("ak",  getAk());
         String jsonString = HttpUtil.get(ROUTE_MATRIX_URL, paramMap);
-        BaiduResponse response = JSONUtil.toBean(jsonString, BaiduResponse.class);
+        BaiduRouteMatrixResponse response = JSONUtil.toBean(jsonString, BaiduRouteMatrixResponse.class);
         return response;
     }
 
-    public BaiduResponse routeMatrix(List<Location> list) {
+    public BaiduRouteMatrixResponse routeMatrix(List<Location> list) {
         StringBuilder locBuilder = new StringBuilder();
         Coordinate coordinate;
         for (Location location : list) {
@@ -99,7 +99,7 @@ public class BaiduApi {
         paramMap.put("destinations", locations);
         paramMap.put("ak",  getAk());
         String jsonString = HttpUtil.get(ROUTE_MATRIX_URL, paramMap);
-        BaiduResponse response = JSONUtil.toBean(jsonString, BaiduResponse.class);
+        BaiduRouteMatrixResponse response = JSONUtil.toBean(jsonString, BaiduRouteMatrixResponse.class);
         return response;
     }
 

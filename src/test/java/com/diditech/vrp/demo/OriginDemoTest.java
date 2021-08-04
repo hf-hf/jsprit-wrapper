@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.diditech.vrp.remote.BaiduApi;
-import com.diditech.vrp.remote.BaiduResponse;
+import com.diditech.vrp.remote.BaiduRouteMatrixResponse;
 import com.graphhopper.jsprit.analysis.toolbox.GraphStreamViewer;
 import com.graphhopper.jsprit.analysis.toolbox.Plotter;
 import com.graphhopper.jsprit.core.algorithm.VehicleRoutingAlgorithm;
@@ -146,11 +146,11 @@ public class OriginDemoTest {
 
 
 
-    private static FastVehicleRoutingTransportCostsMatrix createMatrix(int size, BaiduResponse response){
+    private static FastVehicleRoutingTransportCostsMatrix createMatrix(int size, BaiduRouteMatrixResponse response){
         FastVehicleRoutingTransportCostsMatrix.Builder builder = FastVehicleRoutingTransportCostsMatrix.Builder
                 .newInstance(size, false);
 
-        List<BaiduResponse.ResultBean> result = response.getResult();
+        List<BaiduRouteMatrixResponse.ResultBean> result = response.getResult();
         int index = 0;
         for(int i=0;i < size;i++){
             for(int j=0;j < size;j++){

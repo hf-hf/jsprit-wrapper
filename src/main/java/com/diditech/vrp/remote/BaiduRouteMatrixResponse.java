@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
  */
 @NoArgsConstructor
 @Data
-public class BaiduResponse {
+public class BaiduRouteMatrixResponse {
 
     private Integer status;
     private List<ResultBean> result;

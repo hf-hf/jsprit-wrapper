@@ -18,10 +18,10 @@ public class Problem {
     private VehiclesBean vehicles;
     private VehicleTypes vehicleTypes;
     private Shipments shipments;
+    private Services services;
     private SolutionsBean solutions;
     private InitialRoutesBean initialRoutes;
     private Map<String, List<Point>> wayPointsMap;
-
 
     /**
      * 获取推荐的车辆ID

@@ -11,6 +11,7 @@ import java.util.Set;
 import com.diditech.vrp.solution.InitialRoutesBean;
 import com.diditech.vrp.solution.Problem;
 import com.diditech.vrp.solution.ProblemType;
+import com.diditech.vrp.solution.Services;
 import com.diditech.vrp.solution.Shipments;
 import com.diditech.vrp.solution.SolutionsBean;
 import com.diditech.vrp.solution.VehicleTypes;
@@ -21,7 +22,9 @@ import com.graphhopper.jsprit.core.problem.Location;
 import com.graphhopper.jsprit.core.problem.VehicleRoutingProblem;
 import com.graphhopper.jsprit.core.problem.driver.Driver;
 import com.graphhopper.jsprit.core.problem.driver.DriverImpl;
+import com.graphhopper.jsprit.core.problem.job.Break;
 import com.graphhopper.jsprit.core.problem.job.Job;
+import com.graphhopper.jsprit.core.problem.job.Service;
 import com.graphhopper.jsprit.core.problem.job.Shipment;
 import com.graphhopper.jsprit.core.problem.solution.VehicleRoutingProblemSolution;
 import com.graphhopper.jsprit.core.problem.solution.route.VehicleRoute;
@@ -48,6 +51,8 @@ public class VrpResultReader {
     private Problem problem;
 
     private Map<String, Shipment> shipmentMap = new HashMap<>();
+
+    private Map<String, Service> serviceMap = new HashMap<>();
 
     private Map<String, VehicleImpl> vehicleMap = new HashMap<>();
 
@@ -87,7 +92,7 @@ public class VrpResultReader {
         readVehiclesAndTheirTypes();
 
         readShipments();
-        //readServices();
+        readServices();
 
         //readInitialRoutes();
         readSolutions();
@@ -110,8 +115,81 @@ public class VrpResultReader {
         else vrpBuilder.setFleetSize(VehicleRoutingProblem.FleetSize.FINITE);
     }
 
+    private void readServices() {
+        Services services = problem.getServices();
+        if(null == services){
+            return;
+        }
+        List<Services.ServiceBean> serviceConfigs = services.getService();;
+        for (Services.ServiceBean serviceConfig : serviceConfigs) {
+            String id = serviceConfig.getId();
+            if (id == null) throw new IllegalArgumentException("service[@id] is missing.");
+            String type = serviceConfig.getType();
+            if (type == null) type = "service";
+
+            Services.ServiceBean.CapacitydimensionsBean capacityDimensions = serviceConfig.getCapacitydimensions();
+            if (null == capacityDimensions || null == capacityDimensions.getDimension()) {
+                throw new IllegalArgumentException("capacity of service is not set.");
+            }
+            Services.ServiceBean.CapacitydimensionsBean.DimensionBean dimensionBean =
+                    capacityDimensions.getDimension();
+            Integer index = dimensionBean.getIndex();
+            Integer value = dimensionBean.getContent();
+            Service.Builder builder = Service.Builder.newInstance(id)
+                    .addSizeDimension(index, value);
+
+//            //name
+//            String name = serviceConfig.getString("name");
+//            if (name != null) builder.setName(name);
+
+            //location
+            Location.Builder locationBuilder = Location.Builder.newInstance();
+            Services.ServiceBean.LocationBean locationBean = serviceConfig.getLocation();
+            if(null == locationBean){
+                throw new IllegalArgumentException("service miss location");
+            }
+            String serviceLocationId = locationBean.getId();
+            if (serviceLocationId != null) locationBuilder.setId(serviceLocationId);
+
+            Coordinate serviceCoord = getCoord(locationBean);
+            if (serviceCoord != null) {
+                locationBuilder.setCoordinate(serviceCoord);
+            }
+
+            String locationIndex = locationBean.getIndex();
+            if (locationIndex != null) locationBuilder.setIndex(Integer.parseInt(locationIndex));
+            builder.setLocation(locationBuilder.build());
+
+            if (null != serviceConfig.getDuration()) {
+                builder.setServiceTime(serviceConfig.getDuration());
+            }
+            Services.ServiceBean.TimeWindowsBean deliveryTWConfigs = serviceConfig.getTimeWindows();
+            if (null != deliveryTWConfigs && null != deliveryTWConfigs.getTimeWindow()) {
+                Services.ServiceBean.TimeWindowsBean.TimeWindowBean timeWindowBean = deliveryTWConfigs.getTimeWindow();
+                builder.addTimeWindow(TimeWindow.newInstance(timeWindowBean.getStart(), timeWindowBean.getEnd()));
+            }
+
+            //read skills
+//            String skillString = serviceConfig.getString("requiredSkills");
+//            if (skillString != null) {
+//                String cleaned = skillString.replaceAll("\\s", "");
+//                String[] skillTokens = cleaned.split("[,;]");
+//                for (String skill : skillTokens) builder.addRequiredSkill(skill.toLowerCase());
+//            }
+
+            //build service
+            Service service = builder.build();
+            serviceMap.put(service.getId(), service);
+//			vrpBuilder.addJob(service);
+
+        }
+    }
+
     private void readShipments() {
         Shipments shipments = problem.getShipments();
+        if(null == shipments){
+            return;
+        }
         for (Shipments.Shipment shipment : shipments.getShipment()) {
             String id = shipment.getId();
             if (id == null) throw new IllegalArgumentException("shipment[@id] is missing.");
@@ -248,16 +326,16 @@ public class VrpResultReader {
                     if (arrTimeS != null) arrTime = arrTimeS;
                     Long endTimeS = actConfig.getEndTime();
                     if (endTimeS != null) endTime = endTimeS;
-//                    if(type.equals("break")) {
-//                        Break currentbreak = getBreak(vehicleId);
-//                        routeBuilder.addBreak(currentbreak);
-//                    }
-//                    else {
-//                        String serviceId = actConfig.getString("serviceId");
-//                        if (serviceId != null) {
-//                            Service service = getService(serviceId);
-//                            routeBuilder.addService(service);
-//                        } else {
+                    if(type.equals("break")) {
+                        Break currentbreak = getBreak(vehicleId);
+                        routeBuilder.addBreak(currentbreak);
+                    }
+                    else {
+                        String serviceId = actConfig.getServiceId();
+                        if (serviceId != null) {
+                            Service service = getService(serviceId);
+                            routeBuilder.addService(service);
+                        } else {
                             String shipmentId = actConfig.getShipmentId();
                             if(releasedJobIds.contains(shipmentId)){
                                 continue;
@@ -273,8 +351,8 @@ public class VrpResultReader {
                                 routeBuilder.addDelivery(shipment);
                             } else
                                 throw new IllegalArgumentException("type " + type + " is not supported. Use 'pickupShipment' or 'deliverShipment' here");
-                        //}
-                    //}
+                        }
+                    }
                 }
                 routes.add(routeBuilder.build());
             }
@@ -283,8 +361,11 @@ public class VrpResultReader {
             if(null != unassignedJobConfigs){
                 for (SolutionsBean.SolutionBean.UnassignedJobsBean.JobBean unassignedJobConfig : unassignedJobConfigs.getJob()) {
                     String jobId = unassignedJobConfig.getId();
+                    if(releasedJobIds.contains(jobId)){
+                        continue;
+                    }
                     Job job = getShipment(jobId);
-                    //if (job == null) job = getService(jobId);
+                    if (job == null) job = getService(jobId);
                     if (job == null) throw new IllegalArgumentException("cannot find unassignedJob with id " + jobId);
                     solution.getUnassignedJobs().add(job);
                 }
@@ -455,20 +536,20 @@ public class VrpResultReader {
                 Long arrTime = actConfig.getArrTime();
                 Long endTime = actConfig.getEndTime();
 
-//                String serviceId = actConfig.getString("serviceId");
-//                if(type.equals("break")) {
-//                    Break currentbreak = getBreak(vehicleId);
-//                    routeBuilder.addBreak(currentbreak);
-//                }
-//                else {
-//                    if (serviceId != null) {
-//                        Service service = getService(serviceId);
-//                        if (service == null)
-//                            throw new IllegalArgumentException("service to serviceId " + serviceId + " is missing (reference in one of your initial routes). make sure you define the service you refer to here in <services> </services>.");
-//                        //!!!since job is part of initial route, it does not belong to jobs in problem, i.e. variable jobs that can be assigned/scheduled
-//                        freezedJobIds.add(serviceId);
-//                        routeBuilder.addService(service);
-//                    } else {
+                String serviceId = actConfig.getServiceId();
+                if(type.equals("break")) {
+                    Break currentbreak = getBreak(vehicleId);
+                    routeBuilder.addBreak(currentbreak);
+                }
+                else {
+                    if (serviceId != null) {
+                        Service service = getService(serviceId);
+                        if (service == null)
+                            throw new IllegalArgumentException("service to serviceId " + serviceId + " is missing (reference in one of your initial routes). make sure you define the service you refer to here in <services> </services>.");
+                        //!!!since job is part of initial route, it does not belong to jobs in problem, i.e. variable jobs that can be assigned/scheduled
+                        //freezedJobIds.add(serviceId);
+                        routeBuilder.addService(service);
+                    } else {
                         String shipmentId = actConfig.getShipmentId();
                         if (shipmentId == null)
                             throw new IllegalArgumentException("either serviceId or shipmentId is missing");
@@ -485,8 +566,8 @@ public class VrpResultReader {
                             routeBuilder.addDelivery(shipment);
                         } else
                             throw new IllegalArgumentException("type " + type + " is not supported. Use 'pickupShipment' or 'deliverShipment' here");
-                    //}
-                //}
+                    }
+                }
             }
             VehicleRoute route = routeBuilder.build();
             vrpBuilder.addInitialVehicleRoute(route);
@@ -516,6 +597,14 @@ public class VrpResultReader {
         return shipmentMap.get(shipmentId);
     }
 
+    private Service getService(String serviceId) {
+        return serviceMap.get(serviceId);
+    }
+
+    private Break getBreak(String vehicleId) {
+        return vehicleMap.get(vehicleId).getBreak();
+    }
+
     private void addWayPoints(String shipmentId) {
         Map<String, List<Point>> map = this.problem.getWayPointsMap();
         if(CollectionUtil.isEmpty(map)){
@@ -527,5 +616,15 @@ public class VrpResultReader {
         }
     }
 
+    private static Coordinate getCoord(Services.ServiceBean.LocationBean locationBean) {
+        Coordinate pickupCoord = null;
+        Services.ServiceBean.LocationBean.CoordBean coordBean = locationBean.getCoord();
+        if (coordBean.getX() != null && coordBean.getY() != null) {
+            double x = coordBean.getX();
+            double y = coordBean.getY();
+            pickupCoord = Coordinate.newInstance(x, y);
+        }
+        return pickupCoord;
+    }
 
 }

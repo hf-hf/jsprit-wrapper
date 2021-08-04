@@ -7,7 +7,8 @@ import com.diditech.vrp.IBuilder;
 import com.diditech.vrp.JspritConfig;
 import com.diditech.vrp.enums.TacticsEnum;
 import com.diditech.vrp.remote.BaiduApi;
-import com.diditech.vrp.remote.BaiduResponse;
+import com.diditech.vrp.remote.BaiduLiteDirectionResponse;
+import com.diditech.vrp.utils.Point;
 import com.graphhopper.jsprit.core.problem.Location;
 import com.graphhopper.jsprit.core.problem.cost.AbstractForwardVehicleRoutingTransportCosts;
 import com.graphhopper.jsprit.core.problem.driver.Driver;
@@ -31,11 +32,15 @@ public class BaiduVehicleRoutingTransportCostsMatrix
 
     private Map<String, Coordinate> map;
 
+    private Map<String, List<Point>> wayPointsMap;
+
     private TacticsEnum tacticsEnum = JspritConfig.getInstance().getTactics();
 
     public BaiduVehicleRoutingTransportCostsMatrix(Map<String, Coordinate> locationMap,
-                                                   boolean isSymmetric) {
+                                                   boolean isSymmetric,
+                                                   Map<String, List<Point>> wayPointsMap) {
         this.map = locationMap;
+        this.wayPointsMap = wayPointsMap;
         this.builder = VehicleRoutingTransportCostsMatrix.Builder
                 .newInstance(isSymmetric);
         this.load();
@@ -52,17 +57,18 @@ public class BaiduVehicleRoutingTransportCostsMatrix
             fromCoord = map.get(from);
             for (String to : map.keySet()) {
                 toCoord = map.get(to);
-                BaiduResponse response = BaiduApi.singleRouteMatrix(fromCoord, toCoord,
-                        tacticsEnum);
+                BaiduLiteDirectionResponse response =
+                        BaiduApi.liteDirectionDriving(fromCoord, toCoord,
+                        tacticsEnum, wayPointsMap.get(to));
                 if (0 != response.getStatus()) {
                     continue;
                 }
-                List<BaiduResponse.ResultBean> result = response.getResult();
-                distance = result.get(0).getDistance().getValue();
-                duration = result.get(0).getDuration().getValue() * 1000;
+                List<BaiduLiteDirectionResponse.ResultBean.RoutesBean> result = response.getResult().getRoutes();
+                distance = result.get(0).getDistance();
+                duration = result.get(0).getDuration() * 1000;
                 builder.addTransportDistance(from, to, distance);
                 builder.addTransportTime(from, to, duration);
-                //System.out.println(Integer.parseInt(from) + "-" + Integer.parseInt(to));
+                //System.out.println(from + "-" + to);
             }
         }
     }

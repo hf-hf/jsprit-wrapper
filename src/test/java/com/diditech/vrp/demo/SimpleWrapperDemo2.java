@@ -24,6 +24,7 @@ public class SimpleWrapperDemo2 {
 
         FourSeatVehicleWithTimeWindow fourSeatVehicle2 = new FourSeatVehicleWithTimeWindow("v2");
         fourSeatVehicle2.setStartLocation(Point.create(120.493554, 36.156635));
+        fourSeatVehicle2.addSkill("test");
 
         List<BasicVehicle> vehicleList = new ArrayList<>();
         vehicleList.add(fourSeatVehicle1);
@@ -35,37 +36,41 @@ public class SimpleWrapperDemo2 {
                 // 尺寸，这一次作业占用车辆容积的负载，比如一个乘客占一个座
                 1,
                 // 出发地
-                new Point(120.399124, 36.178779),
+                Point.create(120.399124, 36.178779),
                 // 目的地
-                new Point(120.493266, 36.155936))
+                Point.create(120.493266, 36.155936))
                 .setDefaultTimeWindow(job1_start1);
         Date job1_start2 = DateUtil.parseTimeToday("12:30:00");
         ShipmentJob job1_2 = new ShipmentJob("小红", 1,
-                new Point(120.42212, 36.223048),
-                new Point(120.490535, 36.156286))
+                Point.create(120.42212, 36.223048),
+                Point.create(120.490535, 36.156286))
                 .setDefaultTimeWindow(job1_start2);
+        List<Point> wayPoints = new ArrayList<>();
+        wayPoints.add(Point.create(120.22212, 36.223348));
+        wayPoints.add(Point.create(120.46212, 36.223778));
+        job1_1.addWayPoints(wayPoints);
         jobList1.add(job1_1);
         jobList1.add(job1_2);
 
         List<ShipmentJob> jobList2 = new ArrayList<>();
         Date job2_start1 = DateUtil.parseTimeToday("08:45:00");
         ShipmentJob job2_1 = new ShipmentJob("小王", 1,
-                new Point(120.399124, 36.178759),
-                new Point(120.493266, 36.155966))
-                .setPickupTimeWindow(job2_start1)
-                .setDeliveryTimeWindow(job2_start1);
+                Point.create(120.399124, 36.178759),
+                Point.create(120.493266, 36.155966))
+                .setDefaultTimeWindow(job2_start1);
+        job2_1.addSkill("test");
         jobList2.add(job2_1);
 
         List<ShipmentJob> jobList3 = new ArrayList<>();
         Date job3_start1 = DateUtil.parseTimeToday("16:30:00");
         ShipmentJob job3_1 = new ShipmentJob("小刘", 1,
-                new Point(120.42212, 36.223028),
-                new Point(120.490535, 36.156226))
+                Point.create(120.42212, 36.223028),
+                Point.create(120.490535, 36.156226))
                 .setDefaultTimeWindow(job3_start1);
         Date job3_start2 = DateUtil.parseTimeToday("09:30:00");
         ShipmentJob job3_2 = new ShipmentJob("小张", 1,
-                new Point(120.399124, 36.178759),
-                new Point(120.493266, 36.155466))
+                Point.create(120.399124, 36.178759),
+                Point.create(120.493266, 36.155466))
                 .setDefaultTimeWindow(job3_start2);
         jobList3.add(job3_1);
         jobList3.add(job3_2);
@@ -73,22 +78,19 @@ public class SimpleWrapperDemo2 {
         // zero round start
         Date initStart = DateUtil.parseTimeToday("06:30:00");
         ShipmentJob initJob = new ShipmentJob("小李", 1,
-                new Point(120.43212, 36.223028),
-                new Point(120.460535, 36.156226))
+                Point.create(120.43212, 36.223028),
+                Point.create(120.460535, 36.156226))
                 .setDefaultTimeWindow(initStart);
         Map<String, ShipmentJob> initJobMap = new HashMap<>();
         initJobMap.put("v1", initJob);
         Problem last = null;
         last = build(vehicleList, null, last, null, null, initJobMap);
-        vehicleList = null;
         // zero round end
 
         // first round start
         long start = System.currentTimeMillis();
-
-        last = null;
-        last = build(vehicleList, jobList1, last, null, null, null);
         vehicleList = null;
+        last = build(vehicleList, jobList1, last, null, null, null);
 
         long end = System.currentTimeMillis();
         System.out.println("first round total cost:" + (end - start));

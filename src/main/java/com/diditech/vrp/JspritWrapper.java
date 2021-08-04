@@ -75,6 +75,8 @@ public class JspritWrapper {
      */
     protected Map<String, List<Point>> wayPointsMap = new HashMap<>();
 
+    protected Map<String, String> middleMap = new HashMap<>();
+
     public static JspritWrapper create() {
         return new JspritWrapper();
     }
@@ -106,24 +108,27 @@ public class JspritWrapper {
         return this;
     }
 
-    private void addInitialWayPointsMap(Map<String, List<Point>>lastWayPointsMap,
+    private void addInitialWayPointsMap(Map<String, List<Point>> lastWayPointsMap,
                                   Map<String, Shipment> shipmentMap){
         List<Point> points;
         for (String jobId : shipmentMap.keySet()) {
+            Shipment shipment = shipmentMap.get(jobId);
             if(shipmentMap.containsKey(jobId)){
-                addWayPoints(jobId, lastWayPointsMap.get(jobId));
+                addWayPoints(shipment, lastWayPointsMap.get(jobId));
             }
         }
     }
 
-    private void addWayPoints(String jobId, List<Point> wayPoints){
+    private void addWayPoints(Shipment shipment, List<Point> wayPoints){
         if(CollectionUtil.isEmpty(wayPoints)){
             return;
         }
-        if(wayPointsMap.containsKey(jobId)){
+        if(wayPointsMap.containsKey(shipment.getId())){
             throw new IllegalArgumentException("repeated way points");
         }
-        wayPointsMap.put(jobId, wayPoints);
+        wayPointsMap.put(shipment.getId(), wayPoints);
+        // 通过jobId获取location，维护location和jobId的关系
+        middleMap.put(shipment.getId(), shipment.getDeliveryLocation().getId());
     }
 
     public JspritWrapper addInitialVehicleRoutes(Problem lastProblem) {
@@ -140,8 +145,10 @@ public class JspritWrapper {
     }
 
     public JspritWrapper addInitialShipments(Map<String, ShipmentJob> initJobMap){
-        for (String vehicleId : initJobMap.keySet()) {
-            addInitialShipment(vehicleId, initJobMap.get(vehicleId));
+        if(CollectionUtil.isNotEmpty(initJobMap)){
+            for (String vehicleId : initJobMap.keySet()) {
+                addInitialShipment(vehicleId, initJobMap.get(vehicleId));
+            }
         }
         return this;
     }
@@ -157,7 +164,6 @@ public class JspritWrapper {
         if(ObjectUtil.isNull(vehicle)){
             throw new RuntimeException("not find vehicle");
         }
-        // TODO 计算开始结束
         // 构造vehicleRoute
         Date pickupStart = job.getDate();
         Date pickupEnd = DateUtil.offsetMinute(job.getDate(),
@@ -172,6 +178,7 @@ public class JspritWrapper {
                 .setTimeWindow(new TimeWindow(pickupStart.getTime(), pickupEnd.getTime()))
                 .addSizeDimension(0, job.getSizeDimension())
                 .addAllRequiredSkills(job.getSkills());
+        // TODO 结束时间为delivery end time
         Service.Builder<Delivery> delivery = Delivery.Builder.newInstance(job.getId())
                 .setLocation(job.getPickupPoint().loc())
                 .setTimeWindow(new TimeWindow(deliveryStart.getTime(), deliveryend.getTime()))
@@ -208,17 +215,27 @@ public class JspritWrapper {
 
     public JspritWrapper addJob(ShipmentJob job) {
         if (ObjectUtil.isNotNull(job)) {
-            addWayPoints(job.getId(), job.getWayPoints());
+            Shipment shipment = job.build();
+            addWayPoints(shipment, job.getWayPoints());
             this.jobList.add(job);
-            this.builder.addJob(job.build());
+            this.builder.addJob(shipment);
         }
         return this;
     }
 
+    private Map<String, List<Point>> convert2LocationWayPointMap(){
+        Map<String, List<Point>> map = new HashMap<>();
+        for (String jobId : this.wayPointsMap.keySet()) {
+            map.put(this.middleMap.get(jobId), this.wayPointsMap.get(jobId));
+        }
+        return map;
+    }
+
+
     public JspritWrapper setDefaultBaiduRoutingCost() {
         Map<String, Coordinate> locationMap = getLocationMap();
         BaiduVehicleRoutingTransportCostsMatrix matrix =
-                new BaiduVehicleRoutingTransportCostsMatrix(locationMap, false);
+                new BaiduVehicleRoutingTransportCostsMatrix(locationMap, false, convert2LocationWayPointMap());
         setRoutingCost(matrix);
         return this;
     }

@@ -10,8 +10,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 public class InitialRoutesBean {
-
     private List<RouteBean> route;
+
 
     @NoArgsConstructor
     @Data

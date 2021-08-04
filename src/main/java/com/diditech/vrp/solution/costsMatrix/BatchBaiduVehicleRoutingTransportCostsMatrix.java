@@ -5,7 +5,7 @@ import java.util.Map;
 
 import com.diditech.vrp.IBuilder;
 import com.diditech.vrp.remote.BaiduApi;
-import com.diditech.vrp.remote.BaiduResponse;
+import com.diditech.vrp.remote.BaiduRouteMatrixResponse;
 import com.graphhopper.jsprit.core.problem.Location;
 import com.graphhopper.jsprit.core.problem.cost.AbstractForwardVehicleRoutingTransportCosts;
 import com.graphhopper.jsprit.core.problem.driver.Driver;
@@ -38,11 +38,11 @@ public class BatchBaiduVehicleRoutingTransportCostsMatrix extends AbstractForwar
     }
 
     private void load() {
-        BaiduResponse response = BaiduApi.routeMatrix(map);
+        BaiduRouteMatrixResponse response = BaiduApi.routeMatrix(map);
         if (0 != response.getStatus()) {
             return;
         }
-        List<BaiduResponse.ResultBean> result = response.getResult();
+        List<BaiduRouteMatrixResponse.ResultBean> result = response.getResult();
         int index = 0;
         double distance;
         double duration;

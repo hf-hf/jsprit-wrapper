@@ -55,7 +55,9 @@ public class ShipmentJob implements IBuilder, IPoint {
      */
     protected int sizeDimension;
 
-    protected Date date;
+    protected Date startDate;
+
+    protected Date endDate;
 
     public ShipmentJob(String id, int sizeDimension, Point pickupPoint, Point deliveryPoint) {
         this.id = id;
@@ -63,11 +65,6 @@ public class ShipmentJob implements IBuilder, IPoint {
         this.deliveryPoint = deliveryPoint;
         this.sizeDimension = sizeDimension;
         this.builder = Shipment.Builder.newInstance(id);
-    }
-
-    public ShipmentJob setDefaultTimeWindow(Date date) {
-        return setPickupTimeWindow(date)
-                .setDeliveryTimeWindow(date);
     }
 
     public ShipmentJob setPickupTimeWindow(Date date) {
@@ -80,22 +77,21 @@ public class ShipmentJob implements IBuilder, IPoint {
     public ShipmentJob setPickupTimeWindow(Date start, Date end) {
         this.builder.setPickupTimeWindow(TimeWindow.newInstance(start.getTime(),
                 end.getTime()));
-        this.date = start;
+        this.startDate = start;
         return this;
     }
 
     public ShipmentJob setDeliveryTimeWindow(Date start, Date end) {
         this.builder.setDeliveryTimeWindow(TimeWindow.newInstance(start.getTime(),
                 end.getTime()));
+        this.endDate = end;
         return this;
     }
 
     public ShipmentJob setDeliveryTimeWindow(Date date) {
-        Date start = DateUtil.offsetMinute(date,
-                JspritConfig.getInstance().getDelivery_wait_start_minutes());
-        Date end = DateUtil.offsetMinute(date,
-                JspritConfig.getInstance().getDelivery_wait_end_minutes());
-        return setDeliveryTimeWindow(start, end);
+        this.builder.setDeliveryTimeWindow(TimeWindow.newInstance(0, date.getTime()));
+        this.endDate = date;
+        return this;
     }
 
     public ShipmentJob addWayPoints(List<Point> points){

@@ -142,8 +142,7 @@ public class SimpleWrapperDemo {
                 //.setFleetSize(VehicleRoutingProblem.FleetSize.FINITE)
                 .addVehicles(vehicleList)
                 .addJobs(jobList)
-                .setDefaultBaiduRoutingCost()
-                .buildProblem(true);
+                .fastBuildProblem(true);
         wrapper.printBestSolution();
         return problem;
     }

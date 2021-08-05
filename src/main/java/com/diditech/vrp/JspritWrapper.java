@@ -1,13 +1,13 @@
 package com.diditech.vrp;
 
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import com.diditech.vrp.job.ShipmentJob;
 import com.diditech.vrp.solution.Problem;
@@ -19,6 +19,7 @@ import com.diditech.vrp.vehicle.BasicVehicle;
 import com.graphhopper.jsprit.core.algorithm.VehicleRoutingAlgorithm;
 import com.graphhopper.jsprit.core.algorithm.box.Jsprit;
 import com.graphhopper.jsprit.core.problem.VehicleRoutingProblem;
+import com.graphhopper.jsprit.core.problem.cost.AbstractForwardVehicleRoutingTransportCosts;
 import com.graphhopper.jsprit.core.problem.cost.VehicleRoutingTransportCosts;
 import com.graphhopper.jsprit.core.problem.job.Delivery;
 import com.graphhopper.jsprit.core.problem.job.Pickup;
@@ -62,7 +63,9 @@ public class JspritWrapper {
     protected final VehicleRoutingProblem.FleetSize DEFAULT_FLEET_SIZE =
             VehicleRoutingProblem.FleetSize.FINITE;
 
-    protected VehicleRoutingProblem.FleetSize fleetSize = DEFAULT_FLEET_SIZE;
+    protected VehicleRoutingProblem.FleetSize fleetSize;
+
+    protected VehicleRoutingTransportCosts routingCost;
 
     protected Set<String> releasedJobIds = new HashSet<>();
 
@@ -138,7 +141,9 @@ public class JspritWrapper {
                             .addReleasedVehicleIds(releasedVehicleIds)
                             .addReleasedJobIds(releasedJobIds)
                     .read();
-            this.builder.addInitialVehicleRoutes(reader.getRoutes());
+            if(null != reader.getRoutes()){
+                this.builder.addInitialVehicleRoutes(reader.getRoutes());
+            }
             addInitialWayPointsMap(lastProblem.getWayPointsMap(), reader.getShipmentMap());
         }
         return this;
@@ -165,23 +170,20 @@ public class JspritWrapper {
             throw new RuntimeException("not find vehicle");
         }
         // 构造vehicleRoute
-        Date pickupStart = job.getDate();
-        Date pickupEnd = DateUtil.offsetMinute(job.getDate(),
-                JspritConfig.getInstance().getPickup_wait_minutes());
-        Date deliveryStart = DateUtil.offsetMinute(job.getDate(),
-                JspritConfig.getInstance().getDelivery_wait_start_minutes());
-        Date deliveryend = DateUtil.offsetMinute(job.getDate(),
-                JspritConfig.getInstance().getDelivery_wait_end_minutes());
+        long pickupStart = job.getStartDate().getTime();
+        long pickupEnd = DateUtil.offsetMinute(job.getStartDate(),
+                JspritConfig.getInstance().getPickup_wait_minutes()).getTime();
+        long deliveryStart = 0;
+        long deliveryEnd = job.getEndDate().getTime();
         VehicleRoute.Builder vrBuilder = VehicleRoute.Builder.newInstance(vehicle);
         Service.Builder<Pickup> pickup = Pickup.Builder.newInstance(job.getId())
                 .setLocation(job.getPickupPoint().loc())
-                .setTimeWindow(new TimeWindow(pickupStart.getTime(), pickupEnd.getTime()))
+                .setTimeWindow(new TimeWindow(pickupStart, pickupEnd))
                 .addSizeDimension(0, job.getSizeDimension())
                 .addAllRequiredSkills(job.getSkills());
-        // TODO 结束时间为delivery end time
         Service.Builder<Delivery> delivery = Delivery.Builder.newInstance(job.getId())
                 .setLocation(job.getPickupPoint().loc())
-                .setTimeWindow(new TimeWindow(deliveryStart.getTime(), deliveryend.getTime()))
+                .setTimeWindow(new TimeWindow(deliveryStart, deliveryEnd))
                 .addSizeDimension(0, job.getSizeDimension())
                 .addAllRequiredSkills(job.getSkills());
         vrBuilder.addPickup(pickup.build());
@@ -231,22 +233,21 @@ public class JspritWrapper {
         return map;
     }
 
-
-    public JspritWrapper setDefaultBaiduRoutingCost() {
-        Map<String, Coordinate> locationMap = getLocationMap();
-        BaiduVehicleRoutingTransportCostsMatrix matrix =
-                new BaiduVehicleRoutingTransportCostsMatrix(locationMap, false, convert2LocationWayPointMap());
-        setRoutingCost(matrix);
-        return this;
-    }
-
     public JspritWrapper setRoutingCost(VehicleRoutingTransportCosts routingCost) {
-        this.builder.setRoutingCost(routingCost);
+        this.routingCost = routingCost;
         return this;
     }
 
     public JspritWrapper buildProblem() {
+        if(null == fleetSize){
+            fleetSize = DEFAULT_FLEET_SIZE;
+        }
         this.builder.setFleetSize(fleetSize);
+        if(null == routingCost){
+            routingCost = new BaiduVehicleRoutingTransportCostsMatrix(getLocationMap(),
+                    false, convert2LocationWayPointMap());
+        }
+        this.builder.setRoutingCost(routingCost);
         this.problem = this.builder.build();
         return this;
     }
@@ -273,7 +274,11 @@ public class JspritWrapper {
         return this.problem;
     }
 
-    public Problem buildProblem(boolean onlyBestSolution) {
+    public Problem fastBuildProblem(){
+        return fastBuildProblem(true);
+    }
+
+    public Problem fastBuildProblem(boolean onlyBestSolution) {
         return this.buildProblem().createAlgorithm()
                 .searchSolutions().getProblem(onlyBestSolution);
     }

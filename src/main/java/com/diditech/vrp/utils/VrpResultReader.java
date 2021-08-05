@@ -37,12 +37,14 @@ import com.graphhopper.jsprit.core.util.Coordinate;
 
 import cn.hutool.core.collection.CollectionUtil;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * VRP结果读取
  * @author hefan
  * @date 2021/7/20 10:38
  */
+@Slf4j
 @Data
 public class VrpResultReader {
 
@@ -297,79 +299,82 @@ public class VrpResultReader {
             double cost = -1;
             if (totalCost != null) cost = totalCost;
             SolutionsBean.SolutionBean.RoutesBean routeConfigs = solutionConfig.getRoutes();
-            routes = new ArrayList<VehicleRoute>();
-            for (Route routeConfig : routeConfigs.getRoute()) {
-                //! here, driverId is set to noDriver, no matter whats in driverId.
-                Driver driver = DriverImpl.noDriver();
-                String vehicleId = routeConfig.getVehicleId();
-                if(releasedVehicleIds.contains(vehicleId)){
-                    continue;
-                }
-                Vehicle vehicle = getVehicle(vehicleId);
-                if (vehicle == null) throw new IllegalArgumentException("vehicle is missing.");
-                Long start = routeConfig.getStart();
-                if (start == null) throw new IllegalArgumentException("route start-time is missing.");
-                double departureTime = start;
-
-                Long end = routeConfig.getEnd();
-                if (end == null) throw new IllegalArgumentException("route end-time is missing.");
-
-                VehicleRoute.Builder routeBuilder = VehicleRoute.Builder.newInstance(vehicle, driver);
-                routeBuilder.setDepartureTime(departureTime);
-                List<Act> actConfigs = routeConfig.getAct();
-                for (Act actConfig : actConfigs) {
-                    String type = actConfig.getType();
-                    if (type == null) throw new IllegalArgumentException("act[@type] is missing.");
-                    double arrTime = 0.;
-                    double endTime = 0.;
-                    Long arrTimeS = actConfig.getArrTime();
-                    if (arrTimeS != null) arrTime = arrTimeS;
-                    Long endTimeS = actConfig.getEndTime();
-                    if (endTimeS != null) endTime = endTimeS;
-                    if(type.equals("break")) {
-                        Break currentbreak = getBreak(vehicleId);
-                        routeBuilder.addBreak(currentbreak);
-                    }
-                    else {
-                        String serviceId = actConfig.getServiceId();
-                        if (serviceId != null) {
-                            Service service = getService(serviceId);
-                            routeBuilder.addService(service);
-                        } else {
-                            String shipmentId = actConfig.getShipmentId();
-                            if(releasedJobIds.contains(shipmentId)){
-                                continue;
-                            }
-                            if (shipmentId == null)
-                                throw new IllegalArgumentException("either serviceId or shipmentId is missing");
-                            Shipment shipment = getShipment(shipmentId);
-                            if (shipment == null)
-                                throw new IllegalArgumentException("shipment with id " + shipmentId + " does not exist.");
-                            if (type.equals("pickupShipment")) {
-                                routeBuilder.addPickup(shipment);
-                            } else if (type.equals("deliverShipment")) {
-                                routeBuilder.addDelivery(shipment);
-                            } else
-                                throw new IllegalArgumentException("type " + type + " is not supported. Use 'pickupShipment' or 'deliverShipment' here");
-                        }
-                    }
-                }
-                routes.add(routeBuilder.build());
-            }
-            VehicleRoutingProblemSolution solution = new VehicleRoutingProblemSolution(routes, cost);
-            SolutionsBean.SolutionBean.UnassignedJobsBean unassignedJobConfigs = solutionConfig.getUnassignedJobs();
-            if(null != unassignedJobConfigs){
-                for (SolutionsBean.SolutionBean.UnassignedJobsBean.JobBean unassignedJobConfig : unassignedJobConfigs.getJob()) {
-                    String jobId = unassignedJobConfig.getId();
-                    if(releasedJobIds.contains(jobId)){
+            if(null != routeConfigs){
+                routes = new ArrayList<VehicleRoute>();
+                for (Route routeConfig : routeConfigs.getRoute()) {
+                    //! here, driverId is set to noDriver, no matter whats in driverId.
+                    Driver driver = DriverImpl.noDriver();
+                    String vehicleId = routeConfig.getVehicleId();
+                    if(releasedVehicleIds.contains(vehicleId)){
+                        log.info("release vehicle id:{}", vehicleId);
                         continue;
                     }
-                    Job job = getShipment(jobId);
-                    if (job == null) job = getService(jobId);
-                    if (job == null) throw new IllegalArgumentException("cannot find unassignedJob with id " + jobId);
-                    solution.getUnassignedJobs().add(job);
+                    Vehicle vehicle = getVehicle(vehicleId);
+                    if (vehicle == null) throw new IllegalArgumentException("vehicle is missing.");
+                    Long start = routeConfig.getStart();
+                    if (start == null) throw new IllegalArgumentException("route start-time is missing.");
+                    double departureTime = start;
+
+                    Long end = routeConfig.getEnd();
+                    if (end == null) throw new IllegalArgumentException("route end-time is missing.");
+
+                    VehicleRoute.Builder routeBuilder = VehicleRoute.Builder.newInstance(vehicle, driver);
+                    routeBuilder.setDepartureTime(departureTime);
+                    List<Act> actConfigs = routeConfig.getAct();
+                    for (Act actConfig : actConfigs) {
+                        String type = actConfig.getType();
+                        if (type == null) throw new IllegalArgumentException("act[@type] is missing.");
+                        double arrTime = 0.;
+                        double endTime = 0.;
+                        Long arrTimeS = actConfig.getArrTime();
+                        if (arrTimeS != null) arrTime = arrTimeS;
+                        Long endTimeS = actConfig.getEndTime();
+                        if (endTimeS != null) endTime = endTimeS;
+                        if(type.equals("break")) {
+                            Break currentbreak = getBreak(vehicleId);
+                            routeBuilder.addBreak(currentbreak);
+                        }
+                        else {
+                            String serviceId = actConfig.getServiceId();
+                            if (serviceId != null) {
+                                Service service = getService(serviceId);
+                                routeBuilder.addService(service);
+                            } else {
+                                String shipmentId = actConfig.getShipmentId();
+                                if(releasedJobIds.contains(shipmentId)){
+                                    continue;
+                                }
+                                if (shipmentId == null)
+                                    throw new IllegalArgumentException("either serviceId or shipmentId is missing");
+                                Shipment shipment = getShipment(shipmentId);
+                                if (shipment == null)
+                                    throw new IllegalArgumentException("shipment with id " + shipmentId + " does not exist.");
+                                if (type.equals("pickupShipment")) {
+                                    routeBuilder.addPickup(shipment);
+                                } else if (type.equals("deliverShipment")) {
+                                    routeBuilder.addDelivery(shipment);
+                                } else
+                                    throw new IllegalArgumentException("type " + type + " is not supported. Use 'pickupShipment' or 'deliverShipment' here");
+                            }
+                        }
+                    }
+                    routes.add(routeBuilder.build());
                 }
             }
+            VehicleRoutingProblemSolution solution = new VehicleRoutingProblemSolution(routes, cost);
+//            SolutionsBean.SolutionBean.UnassignedJobsBean unassignedJobConfigs = solutionConfig.getUnassignedJobs();
+//            if(null != unassignedJobConfigs){
+//                for (SolutionsBean.SolutionBean.UnassignedJobsBean.JobBean unassignedJobConfig : unassignedJobConfigs.getJob()) {
+//                    String jobId = unassignedJobConfig.getId();
+//                    if(releasedJobIds.contains(jobId)){
+//                        continue;
+//                    }
+//                    Job job = getShipment(jobId);
+//                    if (job == null) job = getService(jobId);
+//                    if (job == null) throw new IllegalArgumentException("cannot find unassignedJob with id " + jobId);
+//                    solution.getUnassignedJobs().add(job);
+//                }
+//            }
 
             solutionList.add(solution);
         }

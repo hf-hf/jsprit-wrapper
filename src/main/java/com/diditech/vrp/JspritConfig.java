@@ -37,14 +37,6 @@ public class JspritConfig {
         if(ObjectUtil.isNotNull(pickup_wait_minutes)){
             INSTANCE.setPickup_wait_minutes(pickup_wait_minutes);
         }
-        Integer delivery_wait_start_minutes = setting.getInt("delivery_wait_start_minutes");
-        if(ObjectUtil.isNotNull(delivery_wait_start_minutes)){
-            INSTANCE.setDelivery_wait_start_minutes(delivery_wait_start_minutes);
-        }
-        Integer delivery_wait_end_minutes = setting.getInt("delivery_wait_end_minutes");
-        if(ObjectUtil.isNotNull(delivery_wait_end_minutes)){
-            INSTANCE.setDelivery_wait_end_minutes(delivery_wait_end_minutes);
-        }
     }
 
     private JspritConfig() {
@@ -66,17 +58,5 @@ public class JspritConfig {
      * 10分钟内能够上车
      */
     int pickup_wait_minutes = 10;
-
-    /**
-     * 送达目的前的等候时间，起始
-     * 默认20~120分钟内能够送达目的地
-     */
-    int delivery_wait_start_minutes = 20;
-
-    /**
-     * 送达目的前的等候时间，结束
-     * 默认20~120分钟内能够送达目的地
-     */
-    int delivery_wait_end_minutes = 120;
 
 }

@@ -19,6 +19,7 @@ import com.graphhopper.jsprit.core.util.FastVehicleRoutingTransportCostsMatrix;
  * @author hefan
  * @date 2021/7/8 14:55
  */
+@Deprecated
 public class BatchBaiduVehicleRoutingTransportCostsMatrix extends AbstractForwardVehicleRoutingTransportCosts
         implements IBuilder<FastVehicleRoutingTransportCostsMatrix> {
 

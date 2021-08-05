@@ -7,7 +7,3 @@ baidu.ak = gUMFqL9vB5Vf3etWx9G8nBju1yu281nL
 tactics = 0
 # 10分钟内能够上车
 pickup_wait_minutes = 10
-# 送达目的前的等候时间，起始
-delivery_wait_start_minutes = 20
-# 送达目的前的等候时间，结束
-delivery_wait_end_minutes = 120

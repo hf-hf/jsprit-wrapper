@@ -59,6 +59,10 @@ public class ShipmentJob implements IBuilder, IPoint {
 
     protected Date endDate;
 
+    public ShipmentJob(String id, Point pickupPoint, Point deliveryPoint) {
+        this(id, 1, pickupPoint, deliveryPoint);
+    }
+
     public ShipmentJob(String id, int sizeDimension, Point pickupPoint, Point deliveryPoint) {
         this.id = id;
         this.pickupPoint = pickupPoint;

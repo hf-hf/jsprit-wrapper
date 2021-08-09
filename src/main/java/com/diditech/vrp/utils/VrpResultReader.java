@@ -362,19 +362,27 @@ public class VrpResultReader {
                 }
             }
             VehicleRoutingProblemSolution solution = new VehicleRoutingProblemSolution(routes, cost);
-//            SolutionsBean.SolutionBean.UnassignedJobsBean unassignedJobConfigs = solutionConfig.getUnassignedJobs();
-//            if(null != unassignedJobConfigs){
-//                for (SolutionsBean.SolutionBean.UnassignedJobsBean.JobBean unassignedJobConfig : unassignedJobConfigs.getJob()) {
-//                    String jobId = unassignedJobConfig.getId();
-//                    if(releasedJobIds.contains(jobId)){
-//                        continue;
-//                    }
+            SolutionsBean.SolutionBean.UnassignedJobsBean unassignedJobConfigs = solutionConfig.getUnassignedJobs();
+            if(null != unassignedJobConfigs){
+                for (SolutionsBean.SolutionBean.UnassignedJobsBean.JobBean unassignedJobConfig : unassignedJobConfigs.getJob()) {
+                    String jobId = unassignedJobConfig.getId();
+                    if(releasedJobIds.contains(jobId)){
+                        continue;
+                    }
+                    // 移除掉
+                    Job job = shipmentMap.remove(jobId);
+                    if (job == null){
+                        job = serviceMap.remove(jobId);
+                    }
+                    if (job == null){
+                        throw new IllegalArgumentException("cannot find unassignedJob with id " + jobId);
+                    }
 //                    Job job = getShipment(jobId);
 //                    if (job == null) job = getService(jobId);
 //                    if (job == null) throw new IllegalArgumentException("cannot find unassignedJob with id " + jobId);
 //                    solution.getUnassignedJobs().add(job);
-//                }
-//            }
+                }
+            }
 
             solutionList.add(solution);
         }
@@ -581,11 +589,11 @@ public class VrpResultReader {
     }
 
     private void addJobsAndTheirLocationsToVrp() {
-//        for (Service service : serviceMap.values()) {
-//            if (!freezedJobIds.contains(service.getId())) {
-//                vrpBuilder.addJob(service);
-//            }
-//        }
+        for (Service service : serviceMap.values()) {
+            //if (!freezedJobIds.contains(service.getId())) {
+                vrpBuilder.addJob(service);
+            //}
+        }
         for (Shipment shipment : shipmentMap.values()) {
             //if (!freezedJobIds.contains(shipment.getId())) {
                 vrpBuilder.addJob(shipment);

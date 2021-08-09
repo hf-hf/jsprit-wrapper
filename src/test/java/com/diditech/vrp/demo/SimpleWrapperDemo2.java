@@ -53,7 +53,8 @@ public class SimpleWrapperDemo2 {
                 .setDeliveryTimeWindow(job1_end1);
         Date job1_start2 = DateUtil.parseTimeToday("12:30:00");
         Date job1_end2 = DateUtil.parseTimeToday("12:30:00");
-        ShipmentJob job1_2 = new ShipmentJob("小红", 1,
+        ShipmentJob job1_2 = new ShipmentJob("小红",
+                1,
                 Point.create(120.42212, 36.223048),
                 Point.create(120.490535, 36.156286))
                 .setPickupTimeWindow(job1_start2)
@@ -72,7 +73,8 @@ public class SimpleWrapperDemo2 {
         List<ShipmentJob> jobList2 = new ArrayList<>();
         Date job2_start1 = DateUtil.parseTimeToday("08:45:00");
         Date job2_end1 = DateUtil.parseTimeToday("10:45:00");
-        ShipmentJob job2_1 = new ShipmentJob("小王", 1,
+        ShipmentJob job2_1 = new ShipmentJob("小王",
+                1,
                 Point.create(120.399124, 36.178759),
                 Point.create(120.493266, 36.155966))
                 .setPickupTimeWindow(job2_start1)
@@ -83,14 +85,16 @@ public class SimpleWrapperDemo2 {
         List<ShipmentJob> jobList3 = new ArrayList<>();
         Date job3_start1 = DateUtil.parseTimeToday("16:30:00");
         Date job3_end1 = DateUtil.parseTimeToday("18:30:00");
-        ShipmentJob job3_1 = new ShipmentJob("小刘", 1,
+        ShipmentJob job3_1 = new ShipmentJob("小刘",
+                1,
                 Point.create(120.42212, 36.223028),
                 Point.create(120.490535, 36.156226))
                 .setPickupTimeWindow(job3_start1)
                 .setDeliveryTimeWindow(job3_end1);
         Date job3_start2 = DateUtil.parseTimeToday("09:30:00");
         Date job3_end2 = DateUtil.parseTimeToday("11:30:00");
-        ShipmentJob job3_2 = new ShipmentJob("小张", 1,
+        ShipmentJob job3_2 = new ShipmentJob("小张",
+                1,
                 Point.create(120.399124, 36.178759),
                 Point.create(120.493266, 36.155466))
                 .setPickupTimeWindow(job3_start2)
@@ -98,9 +102,10 @@ public class SimpleWrapperDemo2 {
         jobList3.add(job3_1);
         jobList3.add(job3_2);
 
-        Date initStart = DateUtil.parseTimeToday("06:30:00");
-        Date initEnd = DateUtil.parseTimeToday("08:30:00");
-        ShipmentJob initJob = new ShipmentJob("小李", 1,
+        Date initStart = DateUtil.parseTimeToday("17:30:00");
+        Date initEnd = DateUtil.parseTimeToday("18:30:00");
+        ShipmentJob initJob = new ShipmentJob("小李",
+                1,
                 Point.create(120.43212, 36.223028),
                 Point.create(120.460535, 36.156226))
                 .setPickupTimeWindow(initStart)

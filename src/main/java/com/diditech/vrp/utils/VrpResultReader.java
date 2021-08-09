@@ -23,7 +23,9 @@ import com.graphhopper.jsprit.core.problem.VehicleRoutingProblem;
 import com.graphhopper.jsprit.core.problem.driver.Driver;
 import com.graphhopper.jsprit.core.problem.driver.DriverImpl;
 import com.graphhopper.jsprit.core.problem.job.Break;
+import com.graphhopper.jsprit.core.problem.job.Delivery;
 import com.graphhopper.jsprit.core.problem.job.Job;
+import com.graphhopper.jsprit.core.problem.job.Pickup;
 import com.graphhopper.jsprit.core.problem.job.Service;
 import com.graphhopper.jsprit.core.problem.job.Shipment;
 import com.graphhopper.jsprit.core.problem.solution.VehicleRoutingProblemSolution;
@@ -36,6 +38,7 @@ import com.graphhopper.jsprit.core.problem.vehicle.VehicleTypeImpl;
 import com.graphhopper.jsprit.core.util.Coordinate;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.StrUtil;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
@@ -127,7 +130,7 @@ public class VrpResultReader {
             String id = serviceConfig.getId();
             if (id == null) throw new IllegalArgumentException("service[@id] is missing.");
             String type = serviceConfig.getType();
-            if (type == null) type = "service";
+            if (StrUtil.isBlank(type)) type = "service";
 
             Services.ServiceBean.CapacitydimensionsBean capacityDimensions = serviceConfig.getCapacitydimensions();
             if (null == capacityDimensions || null == capacityDimensions.getDimension()) {
@@ -137,8 +140,7 @@ public class VrpResultReader {
                     capacityDimensions.getDimension();
             Integer index = dimensionBean.getIndex();
             Integer value = dimensionBean.getContent();
-            Service.Builder builder = Service.Builder.newInstance(id)
-                    .addSizeDimension(index, value);
+            Service.Builder builder = createServiceBuilder(type, id, value);
 
 //            //name
 //            String name = serviceConfig.getString("name");
@@ -638,6 +640,20 @@ public class VrpResultReader {
             pickupCoord = Coordinate.newInstance(x, y);
         }
         return pickupCoord;
+    }
+
+    public Service.Builder createServiceBuilder(String serviceType, String id, Integer size) {
+        if (serviceType.equals("pickup")) {
+            if (size != null) return Pickup.Builder.newInstance(id).addSizeDimension(0, size);
+            else return Pickup.Builder.newInstance(id);
+        } else if (serviceType.equals("delivery")) {
+            if (size != null) return Delivery.Builder.newInstance(id).addSizeDimension(0, size);
+            else return Delivery.Builder.newInstance(id);
+        } else {
+            if (size != null) return Service.Builder.newInstance(id).addSizeDimension(0, size);
+            else return Service.Builder.newInstance(id);
+
+        }
     }
 
 }

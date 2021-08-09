@@ -7,11 +7,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 
 import com.diditech.vrp.job.ShipmentJob;
 import com.diditech.vrp.solution.Problem;
 import com.diditech.vrp.solution.costsMatrix.BaiduVehicleRoutingTransportCostsMatrix;
+import com.diditech.vrp.utils.NewSolutionPrinter;
 import com.diditech.vrp.utils.Point;
 import com.diditech.vrp.utils.VrpResultReader;
 import com.diditech.vrp.utils.VrpResultWriter;
@@ -19,11 +19,7 @@ import com.diditech.vrp.vehicle.BasicVehicle;
 import com.graphhopper.jsprit.core.algorithm.VehicleRoutingAlgorithm;
 import com.graphhopper.jsprit.core.algorithm.box.Jsprit;
 import com.graphhopper.jsprit.core.problem.VehicleRoutingProblem;
-import com.graphhopper.jsprit.core.problem.cost.AbstractForwardVehicleRoutingTransportCosts;
 import com.graphhopper.jsprit.core.problem.cost.VehicleRoutingTransportCosts;
-import com.graphhopper.jsprit.core.problem.job.Delivery;
-import com.graphhopper.jsprit.core.problem.job.Pickup;
-import com.graphhopper.jsprit.core.problem.job.Service;
 import com.graphhopper.jsprit.core.problem.job.Shipment;
 import com.graphhopper.jsprit.core.problem.solution.VehicleRoutingProblemSolution;
 import com.graphhopper.jsprit.core.problem.solution.route.VehicleRoute;
@@ -176,18 +172,26 @@ public class JspritWrapper {
         long deliveryStart = 0;
         long deliveryEnd = job.getEndDate().getTime();
         VehicleRoute.Builder vrBuilder = VehicleRoute.Builder.newInstance(vehicle);
-        Service.Builder<Pickup> pickup = Pickup.Builder.newInstance(job.getId())
-                .setLocation(job.getPickupPoint().loc())
-                .setTimeWindow(new TimeWindow(pickupStart, pickupEnd))
+//        Service.Builder<Pickup> pickup = Pickup.Builder.newInstance(job.getId() + "_1")
+//                .setLocation(job.getPickupPoint().loc())
+//                //.setTimeWindow(new TimeWindow(pickupStart, pickupEnd))
+//                .addSizeDimension(0, job.getSizeDimension())
+//                .addAllRequiredSkills(job.getSkills());
+//        Shipment.Builder<Delivery> delivery = Delivery.Builder.newInstance(job.getId() + "_2")
+//                .setLocation(job.getDeliveryPoint().loc())
+//                //.setTimeWindow(new TimeWindow(deliveryStart, deliveryEnd))
+//                .addSizeDimension(0, job.getSizeDimension())
+//                .addAllRequiredSkills(job.getSkills());
+        Shipment.Builder builder = Shipment.Builder.newInstance(job.getId())
+                .setPickupLocation(job.getPickupPoint().loc())
+                .setDeliveryLocation(job.getDeliveryPoint().loc())
+                .addPickupTimeWindow(pickupStart, pickupEnd)
+                .addDeliveryTimeWindow(deliveryStart, deliveryEnd)
                 .addSizeDimension(0, job.getSizeDimension())
                 .addAllRequiredSkills(job.getSkills());
-        Service.Builder<Delivery> delivery = Delivery.Builder.newInstance(job.getId())
-                .setLocation(job.getPickupPoint().loc())
-                .setTimeWindow(new TimeWindow(deliveryStart, deliveryEnd))
-                .addSizeDimension(0, job.getSizeDimension())
-                .addAllRequiredSkills(job.getSkills());
-        vrBuilder.addPickup(pickup.build());
-        vrBuilder.addDelivery(delivery.build());
+        Shipment shipment = builder.build();
+        vrBuilder.addPickup(shipment, new TimeWindow(pickupStart, pickupEnd));
+        vrBuilder.addDelivery(shipment, new TimeWindow(deliveryStart, deliveryEnd));
         this.builder.addInitialVehicleRoute(vrBuilder.build());
         return this;
     }
@@ -297,7 +301,7 @@ public class JspritWrapper {
     }
 
     public void printBestSolution() {
-        SolutionPrinter.print(this.problem, bestOfSolutions(), SolutionPrinter.Print.VERBOSE);
+        NewSolutionPrinter.print(this.problem, bestOfSolutions(), NewSolutionPrinter.Print.VERBOSE);
     }
 
 }

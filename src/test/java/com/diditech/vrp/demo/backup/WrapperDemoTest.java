@@ -36,8 +36,8 @@ public class WrapperDemoTest {
     };
 
     private static List<Point> pointList = new ArrayList<Point>(){
-        {add(new Point("0", 120.421761, 36.119647));}
-        {add(new Point("1", 120.493554, 36.156635));}
+        {add(new Point("0", 120.421761,36.119647));}
+        {add(new Point("1", 120.493554,36.156635));}
         {add(new Point("2", 120.399124,36.178779));}
         {add(new Point("3", 120.493266,36.155936));}
         {add(new Point("4", 120.42212,36.223048));}

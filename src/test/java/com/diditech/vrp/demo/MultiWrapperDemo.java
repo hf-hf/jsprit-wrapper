@@ -16,7 +16,7 @@ import com.diditech.vrp.vehicle.type.BasicVehicleType;
 
 import cn.hutool.core.date.DateUtil;
 
-public class SimpleWrapperDemo2 {
+public class MultiWrapperDemo {
 
     public static void main(String[] args) {
         // 构造测试数据 start

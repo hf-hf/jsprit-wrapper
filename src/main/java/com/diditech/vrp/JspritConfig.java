@@ -1,7 +1,5 @@
 package com.diditech.vrp;
 
-import com.diditech.vrp.enums.TacticsEnum;
-
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.setting.Setting;
@@ -26,13 +24,6 @@ public class JspritConfig {
         if(StrUtil.isNotBlank(baiduAk)){
             INSTANCE.setBaiduAk(baiduAk);
         }
-        Integer tacticsInt = setting.getInt("tactics");
-        if(ObjectUtil.isNotNull(tacticsInt)){
-            TacticsEnum tactics = TacticsEnum.get(tacticsInt);
-            if(ObjectUtil.isNotNull(tactics)){
-                INSTANCE.setTactics(tactics);
-            }
-        }
         Integer pickup_wait_minutes = setting.getInt("pickup_wait_minutes");
         if(ObjectUtil.isNotNull(pickup_wait_minutes)){
             INSTANCE.setPickup_wait_minutes(pickup_wait_minutes);
@@ -48,11 +39,6 @@ public class JspritConfig {
     }
 
     String baiduAk = "gUMFqL9vB5Vf3etWx9G8nBju1yu281nL";//"3lBS83HG7YYqCf31stUsYHISNCBb2c2a";//"AsuZbkj6YlYI7tDGkomXVeMUb9ypdPdm";
-
-    /**
-     * 路线策略
-     */
-    TacticsEnum tactics = TacticsEnum.CONVENTIONAL_ROUTE;
 
     /**
      * 10分钟内能够上车

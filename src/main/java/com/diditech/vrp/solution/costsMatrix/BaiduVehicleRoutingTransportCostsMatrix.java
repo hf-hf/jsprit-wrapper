@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.diditech.vrp.IBuilder;
-import com.diditech.vrp.JspritConfig;
 import com.diditech.vrp.enums.TacticsEnum;
 import com.diditech.vrp.remote.BaiduApi;
 import com.diditech.vrp.remote.BaiduLiteDirectionResponse;
@@ -34,12 +33,14 @@ public class BaiduVehicleRoutingTransportCostsMatrix
 
     private Map<String, List<Point>> wayPointsMap;
 
-    private TacticsEnum tacticsEnum = JspritConfig.getInstance().getTactics();
+    private TacticsEnum tactics;
 
     public BaiduVehicleRoutingTransportCostsMatrix(Map<String, Coordinate> locationMap,
                                                    boolean isSymmetric,
+                                                   TacticsEnum tacticsEnum,
                                                    Map<String, List<Point>> wayPointsMap) {
         this.map = locationMap;
+        this.tactics = tacticsEnum;
         this.wayPointsMap = wayPointsMap;
         this.builder = VehicleRoutingTransportCostsMatrix.Builder
                 .newInstance(isSymmetric);
@@ -59,7 +60,7 @@ public class BaiduVehicleRoutingTransportCostsMatrix
                 toCoord = map.get(to);
                 BaiduLiteDirectionResponse response =
                         BaiduApi.liteDirectionDriving(fromCoord, toCoord,
-                        tacticsEnum, wayPointsMap.get(to));
+                                tactics, wayPointsMap.get(to));
                 if (0 != response.getStatus()) {
                     continue;
                 }

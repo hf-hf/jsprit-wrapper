@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.diditech.vrp.enums.TacticsEnum;
 import com.diditech.vrp.job.ShipmentJob;
 import com.diditech.vrp.solution.Problem;
 import com.diditech.vrp.solution.costsMatrix.BaiduVehicleRoutingTransportCostsMatrix;
@@ -25,7 +26,6 @@ import com.graphhopper.jsprit.core.problem.solution.VehicleRoutingProblemSolutio
 import com.graphhopper.jsprit.core.problem.solution.route.VehicleRoute;
 import com.graphhopper.jsprit.core.problem.solution.route.activity.TimeWindow;
 import com.graphhopper.jsprit.core.problem.vehicle.VehicleImpl;
-import com.graphhopper.jsprit.core.reporting.SolutionPrinter;
 import com.graphhopper.jsprit.core.util.Coordinate;
 import com.graphhopper.jsprit.core.util.Solutions;
 
@@ -76,6 +76,13 @@ public class JspritWrapper {
 
     protected Map<String, String> middleMap = new HashMap<>();
 
+    /**
+     * 路线策略，详情见TacticsEnum枚举类，默认为0（常规路线）
+     */
+    protected TacticsEnum DEFAULT_TACTICS = TacticsEnum.CONVENTIONAL_ROUTE;
+
+    protected TacticsEnum tactics;
+
     public static JspritWrapper create() {
         return new JspritWrapper();
     }
@@ -90,6 +97,14 @@ public class JspritWrapper {
 
     public JspritWrapper setFleetSize(VehicleRoutingProblem.FleetSize fleetSize) {
         this.fleetSize = fleetSize;
+        return this;
+    }
+
+    /**
+     * 设置路线策略
+     */
+    public JspritWrapper setTactics(TacticsEnum tacticsEnum) {
+        this.tactics = tacticsEnum;
         return this;
     }
 
@@ -247,9 +262,12 @@ public class JspritWrapper {
             fleetSize = DEFAULT_FLEET_SIZE;
         }
         this.builder.setFleetSize(fleetSize);
+        if(null == tactics){
+            tactics = DEFAULT_TACTICS;
+        }
         if(null == routingCost){
             routingCost = new BaiduVehicleRoutingTransportCostsMatrix(getLocationMap(),
-                    false, convert2LocationWayPointMap());
+                    false, this.tactics, convert2LocationWayPointMap());
         }
         this.builder.setRoutingCost(routingCost);
         this.problem = this.builder.build();

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.alibaba.fastjson.JSON;
+import com.diditech.vrp.enums.TacticsEnum;
 import com.diditech.vrp.remote.BaiduRouteMatrixResponse;
 import com.diditech.vrp.solution.Problem;
 import com.diditech.vrp.solution.costsMatrix.BaiduVehicleRoutingTransportCostsMatrix;
@@ -133,7 +134,9 @@ public class OriginDemoTest2 {
 //        builder2.
 
         BaiduVehicleRoutingTransportCostsMatrix matrix =
-                new BaiduVehicleRoutingTransportCostsMatrix(vrpBuilder.getLocationMap(), false, new HashMap<>());
+                new BaiduVehicleRoutingTransportCostsMatrix(vrpBuilder.getLocationMap(), false,
+                        TacticsEnum.CONVENTIONAL_ROUTE,
+                        new HashMap<>());
         vrpBuilder.setRoutingCost(matrix);
 
         //matrix.getMatrix();

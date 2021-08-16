@@ -7,6 +7,7 @@ import java.util.Set;
 
 import com.diditech.vrp.IBuilder;
 import com.diditech.vrp.IPoint;
+import com.diditech.vrp.job.ShipmentJob;
 import com.diditech.vrp.utils.Point;
 import com.diditech.vrp.vehicle.type.BasicVehicleType;
 import com.graphhopper.jsprit.core.problem.vehicle.VehicleImpl;
@@ -45,6 +46,11 @@ public class BasicVehicle implements IBuilder, IPoint {
      * 是否有结束
      */
     protected boolean hasEnd = false;
+
+    /**
+     * 初始作业
+     */
+    protected ShipmentJob initJob;
 
     public BasicVehicle(String id, BasicVehicleType vehicleType) {
         this.id = id;
@@ -87,6 +93,14 @@ public class BasicVehicle implements IBuilder, IPoint {
      */
     public void addAllSkills(Set<String> skills){
         this.skills.addAll(skills);
+    }
+
+    /**
+     * 设置初始单
+     * @param job
+     */
+    public void setInitJob(ShipmentJob job){
+        this.initJob = job;
     }
 
     @Override

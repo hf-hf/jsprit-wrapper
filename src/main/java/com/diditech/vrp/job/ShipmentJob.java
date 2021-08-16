@@ -71,10 +71,21 @@ public class ShipmentJob implements IBuilder, IPoint {
         this.builder = Shipment.Builder.newInstance(id);
     }
 
+    /**
+     * 设置配置的起始时间和结束时间，其他时间根据配置项自行构造
+     * @param start
+     * @param end
+     * @return
+     */
+    public ShipmentJob setConfigTimeWindow(Date start, Date end) {
+        return setPickupTimeWindow(start)
+                .setDeliveryTimeWindow(end);
+    }
+
     public ShipmentJob setPickupTimeWindow(Date date) {
         Date start = date;
         Date end = DateUtil.offsetMinute(date,
-                JspritConfig.getInstance().getPickup_wait_minutes());
+                JspritConfig.getInstance().getPickupMaxWaitMinutes());
         return setPickupTimeWindow(start, end);
     }
 
@@ -93,7 +104,11 @@ public class ShipmentJob implements IBuilder, IPoint {
     }
 
     public ShipmentJob setDeliveryTimeWindow(Date date) {
-        this.builder.setDeliveryTimeWindow(TimeWindow.newInstance(0, date.getTime()));
+        Date start = DateUtil.offsetMinute(date,
+                JspritConfig.getInstance().getDeliveryMinWaitMinutes());
+        Date end = DateUtil.offsetMinute(date,
+                JspritConfig.getInstance().getDeliveryMaxWaitMinutes());
+        this.builder.setDeliveryTimeWindow(TimeWindow.newInstance(start.getTime(), end.getTime()));
         this.endDate = date;
         return this;
     }

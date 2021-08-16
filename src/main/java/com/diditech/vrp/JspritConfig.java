@@ -1,33 +1,21 @@
 package com.diditech.vrp;
 
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.setting.Setting;
-import lombok.Data;
+import com.diditech.vrp.enums.TacticsEnum;
+
+import lombok.Getter;
 
 /**
  * 全局配置
  * @author hefan
  * @date 2021/8/2 15:07
  */
-@Data
+@Getter
 public class JspritConfig {
 
     private static JspritConfig INSTANCE;
 
-    private static Setting setting;
-
     static {
-        setting = new Setting("jsprit.setting");
         JspritConfig.INSTANCE = new JspritConfig();
-        String baiduAk = setting.getStr("baidu.ak");
-        if(StrUtil.isNotBlank(baiduAk)){
-            INSTANCE.setBaiduAk(baiduAk);
-        }
-        Integer pickup_wait_minutes = setting.getInt("pickup_wait_minutes");
-        if(ObjectUtil.isNotNull(pickup_wait_minutes)){
-            INSTANCE.setPickup_wait_minutes(pickup_wait_minutes);
-        }
     }
 
     private JspritConfig() {
@@ -38,11 +26,40 @@ public class JspritConfig {
         return INSTANCE;
     }
 
-    String baiduAk = "gUMFqL9vB5Vf3etWx9G8nBju1yu281nL";//"3lBS83HG7YYqCf31stUsYHISNCBb2c2a";//"AsuZbkj6YlYI7tDGkomXVeMUb9ypdPdm";
+    /**
+     * 拼车上车的最大等待时间，默认为10分钟
+     */
+    int pickupMaxWaitMinutes = 10;
 
     /**
-     * 10分钟内能够上车
+     * 拼车送达的最小延迟时间，默认为0分钟
      */
-    int pickup_wait_minutes = 10;
+    int deliveryMinWaitMinutes = 0;
+
+    /**
+     * 拼车送达的最大延迟时间，默认为120分钟
+     */
+    int deliveryMaxWaitMinutes = 120;
+
+    /**
+     * 路线策略
+     */
+    TacticsEnum tactics = TacticsEnum.CONVENTIONAL_ROUTE;
+
+    public static void setPickupMaxWaitMinutes(int pickupMaxWaitMinutes) {
+        INSTANCE.pickupMaxWaitMinutes = pickupMaxWaitMinutes;
+    }
+
+    public static void setDeliveryMinWaitMinutes(int deliveryMinWaitMinutes) {
+        INSTANCE.deliveryMinWaitMinutes = deliveryMinWaitMinutes;
+    }
+
+    public static void setDeliveryMaxWaitMinutes(int deliveryMaxWaitMinutes) {
+        INSTANCE.deliveryMaxWaitMinutes = deliveryMaxWaitMinutes;
+    }
+
+    public static void setTactics(TacticsEnum tactics) {
+        INSTANCE.tactics = tactics;
+    }
 
 }

@@ -76,13 +76,6 @@ public class JspritWrapper {
 
     protected Map<String, String> middleMap = new HashMap<>();
 
-    /**
-     * 路线策略，详情见TacticsEnum枚举类，默认为0（常规路线）
-     */
-    protected TacticsEnum DEFAULT_TACTICS = TacticsEnum.CONVENTIONAL_ROUTE;
-
-    protected TacticsEnum tactics;
-
     public static JspritWrapper create() {
         return new JspritWrapper();
     }
@@ -97,14 +90,6 @@ public class JspritWrapper {
 
     public JspritWrapper setFleetSize(VehicleRoutingProblem.FleetSize fleetSize) {
         this.fleetSize = fleetSize;
-        return this;
-    }
-
-    /**
-     * 设置路线策略
-     */
-    public JspritWrapper setTactics(TacticsEnum tacticsEnum) {
-        this.tactics = tacticsEnum;
         return this;
     }
 
@@ -183,20 +168,12 @@ public class JspritWrapper {
         // 构造vehicleRoute
         long pickupStart = job.getStartDate().getTime();
         long pickupEnd = DateUtil.offsetMinute(job.getStartDate(),
-                JspritConfig.getInstance().getPickup_wait_minutes()).getTime();
-        long deliveryStart = 0;
-        long deliveryEnd = job.getEndDate().getTime();
+                JspritConfig.getInstance().getPickupMaxWaitMinutes()).getTime();
+        long deliveryStart = DateUtil.offsetMinute(job.getEndDate(),
+                JspritConfig.getInstance().getDeliveryMinWaitMinutes()).getTime();
+        long deliveryEnd = DateUtil.offsetMinute(job.getEndDate(),
+                JspritConfig.getInstance().getDeliveryMaxWaitMinutes()).getTime();
         VehicleRoute.Builder vrBuilder = VehicleRoute.Builder.newInstance(vehicle);
-//        Service.Builder<Pickup> pickup = Pickup.Builder.newInstance(job.getId() + "_1")
-//                .setLocation(job.getPickupPoint().loc())
-//                //.setTimeWindow(new TimeWindow(pickupStart, pickupEnd))
-//                .addSizeDimension(0, job.getSizeDimension())
-//                .addAllRequiredSkills(job.getSkills());
-//        Shipment.Builder<Delivery> delivery = Delivery.Builder.newInstance(job.getId() + "_2")
-//                .setLocation(job.getDeliveryPoint().loc())
-//                //.setTimeWindow(new TimeWindow(deliveryStart, deliveryEnd))
-//                .addSizeDimension(0, job.getSizeDimension())
-//                .addAllRequiredSkills(job.getSkills());
         Shipment.Builder builder = Shipment.Builder.newInstance(job.getId())
                 .setPickupLocation(job.getPickupPoint().loc())
                 .setDeliveryLocation(job.getDeliveryPoint().loc())
@@ -213,7 +190,10 @@ public class JspritWrapper {
 
     public JspritWrapper addVehicles(List<BasicVehicle> vehicles) {
         if (CollectionUtil.isNotEmpty(vehicles)) {
-            vehicles.stream().forEach(vehicle -> addVehicle(vehicle));
+            vehicles.stream().forEach(vehicle -> {
+                addVehicle(vehicle);
+                addInitialShipment(vehicle.getId(), vehicle.getInitJob());
+            });
         }
         return this;
     }
@@ -262,12 +242,9 @@ public class JspritWrapper {
             fleetSize = DEFAULT_FLEET_SIZE;
         }
         this.builder.setFleetSize(fleetSize);
-        if(null == tactics){
-            tactics = DEFAULT_TACTICS;
-        }
         if(null == routingCost){
             routingCost = new BaiduVehicleRoutingTransportCostsMatrix(getLocationMap(),
-                    false, this.tactics, convert2LocationWayPointMap());
+                    false, JspritConfig.getInstance().getTactics(), convert2LocationWayPointMap());
         }
         this.builder.setRoutingCost(routingCost);
         this.problem = this.builder.build();

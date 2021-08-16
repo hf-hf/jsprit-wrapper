@@ -4,15 +4,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.diditech.vrp.JspritConfig;
 import com.diditech.vrp.enums.TacticsEnum;
 import com.diditech.vrp.utils.Point;
 import com.graphhopper.jsprit.core.problem.Location;
 import com.graphhopper.jsprit.core.util.Coordinate;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONUtil;
+import cn.hutool.setting.Setting;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 
@@ -25,6 +26,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @UtilityClass
 public class BaiduApi {
+
+    private static String baiduAk = "3lBS83HG7YYqCf31stUsYHISNCBb2c2a";//"AsuZbkj6YlYI7tDGkomXVeMUb9ypdPdm";
 
     private static final String ROUTE_MATRIX_URL = "http://api.map.baidu.com/routematrix/v2/driving";
 
@@ -109,7 +112,17 @@ public class BaiduApi {
      * @date 2021/7/28 16:07
      */
     private String getAk() {
-        return JspritConfig.getInstance().getBaiduAk();
+        return BaiduApi.baiduAk;
+    }
+
+    private static Setting setting;
+
+    static {
+        setting = new Setting("jsprit.setting");
+        String baiduAk = setting.getStr("baidu.ak");
+        if(StrUtil.isNotBlank(baiduAk)){
+            BaiduApi.baiduAk = baiduAk;
+        }
     }
 
     // 路线规划服务

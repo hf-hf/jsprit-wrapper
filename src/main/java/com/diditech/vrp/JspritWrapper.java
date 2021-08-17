@@ -80,11 +80,10 @@ public class JspritWrapper {
         return new JspritWrapper();
     }
 
-    public static JspritWrapper create(List<String> releasedJobIds,
-                                       List<String> releasedVehicleIds) {
+    public static JspritWrapper create(List<String> releasedVehicleIds) {
         JspritWrapper wrapper = create();
         wrapper.addReleaseVehicles(releasedVehicleIds);
-        wrapper.addReleaseJobs(releasedJobIds);
+        //wrapper.addReleaseJobs(releasedJobIds);
         return wrapper;
     }
 

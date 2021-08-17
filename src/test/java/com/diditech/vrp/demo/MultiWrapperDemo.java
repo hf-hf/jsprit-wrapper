@@ -151,7 +151,7 @@ public class MultiWrapperDemo {
         // 需要释放的车辆ID
         List<String> releasedVehicleId = new ArrayList<>();
         releasedVehicleId.add("v1");
-        wrapper = JspritWrapper.create(releasedJobId, releasedVehicleId);
+        wrapper = JspritWrapper.create(releasedVehicleId);
         last = wrapper
                 .addInitialVehicleRoutes(last)
                 .addJobs(jobList2)

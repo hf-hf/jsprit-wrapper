@@ -136,7 +136,7 @@ public class SimpleWrapperDemo {
                                 List<ShipmentJob> jobList, Problem lastProblem,
                                 List<String> releasedJobId,
                                 List<String> releasedVehicleId) {
-        JspritWrapper wrapper = JspritWrapper.create(releasedJobId, releasedVehicleId);
+        JspritWrapper wrapper = JspritWrapper.create(releasedVehicleId);
         Problem problem = wrapper
                 .addInitialVehicleRoutes(lastProblem)
                 //.setFleetSize(VehicleRoutingProblem.FleetSize.FINITE)

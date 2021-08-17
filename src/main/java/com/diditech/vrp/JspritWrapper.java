@@ -145,6 +145,12 @@ public class JspritWrapper {
         return this;
     }
 
+    /**
+     * 初始单添加到车辆对象的属性中，加车时自动读取
+     * @param initJobMap
+     * @return
+     */
+    @Deprecated
     public JspritWrapper addInitialShipments(Map<String, ShipmentJob> initJobMap){
         if(CollectionUtil.isNotEmpty(initJobMap)){
             for (String vehicleId : initJobMap.keySet()) {

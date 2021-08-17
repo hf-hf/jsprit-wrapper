@@ -2,9 +2,7 @@ package com.diditech.vrp.demo;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import com.diditech.vrp.JspritWrapper;
 import com.diditech.vrp.job.ShipmentJob;
@@ -110,9 +108,18 @@ public class MultiWrapperDemo {
                 Point.create(120.460535, 36.156226))
                 .setPickupTimeWindow(initStart)
                 .setDeliveryTimeWindow(initEnd);
+
+        Date initStart2 = DateUtil.parseTimeToday("16:30:00");
+        Date initEnd2 = DateUtil.parseTimeToday("14:30:00");
+        ShipmentJob initJob2 = new ShipmentJob("小赵",
+                1,
+                Point.create(120.43212, 36.223028),
+                Point.create(120.460535, 36.156226))
+                .setPickupTimeWindow(initStart2)
+                .setDeliveryTimeWindow(initEnd2);
         // 初始订单
-        Map<String, ShipmentJob> initJobMap = new HashMap<>();
-        initJobMap.put("v1", initJob);
+        fourSeatVehicle1.setInitJob(initJob);
+        fourSeatVehicle2.setInitJob(initJob2);
         // 构造测试数据 end
 
         // 测试代码
@@ -120,7 +127,6 @@ public class MultiWrapperDemo {
         JspritWrapper wrapper = JspritWrapper.create();
         Problem last = wrapper
                 .addVehicles(vehicleList)
-                .addInitialShipments(initJobMap)
                 .fastBuildProblem();
         wrapper.printBestSolution();
         // zero round end
@@ -144,7 +150,7 @@ public class MultiWrapperDemo {
         releasedJobId.add("小明");
         // 需要释放的车辆ID
         List<String> releasedVehicleId = new ArrayList<>();
-        //releasedVehicleId.add("v1");
+        releasedVehicleId.add("v1");
         wrapper = JspritWrapper.create(releasedJobId, releasedVehicleId);
         last = wrapper
                 .addInitialVehicleRoutes(last)

@@ -309,6 +309,17 @@ public class VrpResultReader {
                     String vehicleId = routeConfig.getVehicleId();
                     if(releasedVehicleIds.contains(vehicleId)){
                         log.info("release vehicle id:{}", vehicleId);
+                        List<Act> actConfigs = routeConfig.getAct();
+                        String id;
+                        for (Act actConfig : actConfigs) {
+                            id = actConfig.getServiceId();
+                            if(null != id){
+                                serviceMap.remove(id);
+                            } else {
+                                id = actConfig.getShipmentId();
+                                shipmentMap.remove(id);
+                            }
+                        }
                         continue;
                     }
                     Vehicle vehicle = getVehicle(vehicleId);

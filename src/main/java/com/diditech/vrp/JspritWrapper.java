@@ -197,7 +197,6 @@ public class JspritWrapper {
         if (CollectionUtil.isNotEmpty(vehicles)) {
             vehicles.stream().forEach(vehicle -> {
                 addVehicle(vehicle);
-                addInitialShipment(vehicle.getId(), vehicle.getInitJob());
             });
         }
         return this;
@@ -208,6 +207,7 @@ public class JspritWrapper {
             VehicleImpl vehicleImpl = vehicle.build();
             this.vehicleMap.put(vehicle.getId(), vehicleImpl);
             this.builder.addVehicle(vehicleImpl);
+            addInitialShipment(vehicle.getId(), vehicle.getInitJob());
         }
         return this;
     }

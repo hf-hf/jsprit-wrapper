@@ -1,12 +1,15 @@
 package com.diditech.vrp.solution;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import com.diditech.vrp.solution.route.Act;
 import com.diditech.vrp.solution.route.Route;
+import com.diditech.vrp.utils.Constants;
 import com.diditech.vrp.utils.Point;
 
+import cn.hutool.core.util.StrUtil;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -58,6 +61,48 @@ public class Problem {
             else if (s.getCost() < best.getCost()) best = s;
         }
         return best;
+    }
+
+    /**
+     * 获取可用车辆
+     *
+     * @author hefan
+     * @date 2021/8/30 10:29
+     */
+    public List<String> listAvailableVehicles(String jobId) {
+        List<String> idList = new ArrayList<>();
+        if (StrUtil.isBlank(jobId)) {
+            return idList;
+        }
+        SolutionsBean solutionsBean = this.getSolutions();
+        for (SolutionsBean.SolutionBean solution : solutionsBean.getSolution()) {
+            SolutionsBean.SolutionBean.RoutesBean routesBean = solution.getRoutes();
+            for (Route route : routesBean.getRoute()) {
+                for (Act act : route.getAct()) {
+                    if (act.getShipmentId().equals(jobId)) {
+                        idList.add(route.getVehicleId());
+                        break;
+                    }
+                }
+            }
+        }
+        return idList;
+    }
+
+    /**
+     * 获取主作业单ID
+     *
+     * @author hefan
+     * @date 2021/8/30 10:57
+     */
+    public String getMainJobId(String vehicleId) {
+        String name = Constants.MAIN_JOB_NAME_PREFIX + vehicleId;
+        for (Shipments.Shipment shipment : this.getShipments().getShipment()) {
+            if (name.equals(shipment.getName())) {
+                return shipment.getId();
+            }
+        }
+        return null;
     }
 
 }

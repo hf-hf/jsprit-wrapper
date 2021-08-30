@@ -8,10 +8,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.diditech.vrp.enums.TacticsEnum;
 import com.diditech.vrp.job.ShipmentJob;
 import com.diditech.vrp.solution.Problem;
 import com.diditech.vrp.solution.costsMatrix.BaiduVehicleRoutingTransportCostsMatrix;
+import com.diditech.vrp.utils.Constants;
 import com.diditech.vrp.utils.NewSolutionPrinter;
 import com.diditech.vrp.utils.Point;
 import com.diditech.vrp.utils.VrpResultReader;
@@ -180,6 +180,7 @@ public class JspritWrapper {
                 JspritConfig.getInstance().getDeliveryMaxWaitMinutes()).getTime();
         VehicleRoute.Builder vrBuilder = VehicleRoute.Builder.newInstance(vehicle);
         Shipment.Builder builder = Shipment.Builder.newInstance(job.getId())
+                .setName(Constants.MAIN_JOB_NAME_PREFIX + vehicleId) // 标记为主单
                 .setPickupLocation(job.getPickupPoint().loc())
                 .setDeliveryLocation(job.getDeliveryPoint().loc())
                 .addPickupTimeWindow(pickupStart, pickupEnd)

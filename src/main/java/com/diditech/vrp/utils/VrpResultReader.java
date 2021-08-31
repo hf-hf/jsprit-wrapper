@@ -211,9 +211,8 @@ public class VrpResultReader {
             Shipment.Builder builder = Shipment.Builder.newInstance(id)
                     .addSizeDimension(index, value);
 
-            //name = id
-//            String name = shipment.getId("name");
-//            if (name != null) builder.setName(name);
+            String name = shipment.getName();
+            if (name != null) builder.setName(name);
 
             //pickup location
             //pickup-locationId
